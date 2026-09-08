@@ -10,7 +10,7 @@ export type {
   ViewInput,
   ViewScope,
 } from "./schema/document.js";
-export type { EdgeEmphasis, EdgeKind, NodeKind, Status } from "./schema/primitives.js";
+export type { Direction, EdgeEmphasis, EdgeKind, NodeKind, Status } from "./schema/primitives.js";
 export { STATUSES } from "./schema/primitives.js";
 export { ConduitDocumentError, type Parsed, type SchemaIssue } from "./schema/errors.js";
 export { parseDocument, safeParseDocument } from "./schema/parse.js";

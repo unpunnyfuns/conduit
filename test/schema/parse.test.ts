@@ -90,4 +90,16 @@ describe("parseDocument", () => {
   it("rejects a version other than 1", () => {
     expect(() => parseDocument({ ...minimal, version: 2 })).toThrow(ConduitDocumentError);
   });
+
+  it("defaults direction to right", () => {
+    expect(parseDocument(minimal).direction).toBe("right");
+  });
+
+  it("accepts direction down", () => {
+    expect(parseDocument({ ...minimal, direction: "down" }).direction).toBe("down");
+  });
+
+  it("rejects an unknown direction", () => {
+    expect(() => parseDocument({ ...minimal, direction: "up" })).toThrow(ConduitDocumentError);
+  });
 });

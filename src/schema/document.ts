@@ -1,5 +1,14 @@
 import { z } from "zod";
-import { EdgeEmphasis, EdgeKind, Id, Label, NodeKind, Status, Summary } from "./primitives.js";
+import {
+  Direction,
+  EdgeEmphasis,
+  EdgeKind,
+  Id,
+  Label,
+  NodeKind,
+  Status,
+  Summary,
+} from "./primitives.js";
 
 export const Lane = z.strictObject({
   id: Id,
@@ -108,6 +117,7 @@ export const ConduitDocument = z.strictObject({
   version: z.literal(1),
   title: Label,
   summary: Summary.optional(),
+  direction: Direction.default("right"),
   lanes: z.array(Lane).min(1).max(16),
   nodes: z.array(ConduitNode).min(1).max(256),
   edges: z.array(Edge).max(512).default([]),

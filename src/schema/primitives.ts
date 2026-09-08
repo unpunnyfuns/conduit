@@ -53,3 +53,7 @@ export type EdgeKind = z.infer<typeof EdgeKind>;
 
 export const EdgeEmphasis = z.enum(["normal", "hero", "muted"]);
 export type EdgeEmphasis = z.infer<typeof EdgeEmphasis>;
+
+/** Which way the flow runs: lanes as columns with rows going down, or lanes as bands with columns going right. */
+export const Direction = z.enum(["right", "down"]);
+export type Direction = z.infer<typeof Direction>;
