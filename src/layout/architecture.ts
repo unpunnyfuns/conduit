@@ -62,7 +62,7 @@ export const cardHeight = (node: ConduitNode, heights: CardHeights): number => {
   return node.subtitle === undefined ? heights.compact : heights.withSubtitle;
 };
 
-const orderLanes = (lanes: readonly Lane[]): Lane[] =>
+export const orderLanes = (lanes: readonly Lane[]): Lane[] =>
   lanes
     .map((lane, index) => ({ lane, index }))
     .sort(
