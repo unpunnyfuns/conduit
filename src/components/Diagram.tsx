@@ -112,10 +112,7 @@ export const Diagram = ({
     return { nodes, edges, lanes };
   }, [selected, highlight, laid]);
 
-  const emphasised = useMemo(
-    () => (lit === undefined || highlight === "neighbours" ? undefined : lit.edges),
-    [lit, highlight],
-  );
+  const emphasised = lit === undefined || highlight === "neighbours" ? undefined : lit.edges;
 
   const dimmedEdges = useMemo(
     () =>
