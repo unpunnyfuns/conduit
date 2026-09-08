@@ -30,7 +30,6 @@ export const LANE_LABEL_TRACKING = 0.12;
 
 /** Room at the top of a lane for its header, before the first row. */
 export const LANE_HEADER_STRIP = 48;
-export const CONTENT_TOP = LANE_TOP + LANE_HEADER_STRIP;
 export const ROW_GAP = 52;
 
 export const CARD_RADIUS = 10;

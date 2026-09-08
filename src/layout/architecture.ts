@@ -25,6 +25,9 @@ export type PlacedLane = { lane: Lane; box: Box };
  * The gaps of the grid, for the router: the vertical corridors beside each
  * lane's cards and the horizontal extents of every row. Corridor `i` runs to
  * the left of lane `i`; one extra corridor sits after the last lane.
+ *
+ * Frame space: for a `"down"` document these become horizontal and vertical
+ * on screen after `layout()` transposes.
  */
 export type LayoutGrid = {
   rows: { top: number; height: number }[];

@@ -11,6 +11,7 @@ import {
   ROW_GAP,
 } from "../../src/layout/design.js";
 import { frameFor } from "../../src/layout/frame.js";
+import { layoutArchitecture } from "../../src/layout/architecture.js";
 
 const doc = parseDocument({
   version: 1,
@@ -53,6 +54,11 @@ describe("frameFor right", () => {
       LANE_CONTENT_WIDTH - CARD_GAP_X - half,
     ]);
     expect(frame.crossSplit({ grid: 0, nodes: [chart!] })).toEqual([LANE_CONTENT_WIDTH]);
+  });
+
+  it("corridorWidth equals the corridor the layout emits", () => {
+    const laid = layoutArchitecture(graph, frame);
+    for (const c of laid.grid.corridors) expect(c.right - c.left).toBe(frame.corridorWidth);
   });
 });
 
@@ -99,7 +105,12 @@ describe("frameFor down", () => {
     expect(frame.bandWidth).toBe(ROW_GAP);
   });
 
-  it("never lets a band be shorter than a compact card", () => {
+  it("corridorWidth equals the corridor the layout emits", () => {
+    const laid = layoutArchitecture(graph, frame);
+    for (const c of laid.grid.corridors) expect(c.right - c.left).toBe(frame.corridorWidth);
+  });
+
+  it("never lets a band be shorter than a chart card", () => {
     const tiny = parseDocument({
       version: 1,
       title: "T",
@@ -108,6 +119,27 @@ describe("frameFor down", () => {
     });
     expect(
       frameFor("down", { lanes: tiny.lanes, nodes: tiny.nodes, edges: [] }, heights).laneCross,
-    ).toBe(heights.compact);
+    ).toBe(heights.chart);
+  });
+
+  it("keeps band height when a compact card is added", () => {
+    const compact = parseDocument({
+      version: 1,
+      title: "T",
+      lanes: [
+        { id: "a", label: "A" },
+        { id: "b", label: "B" },
+      ],
+      nodes: [
+        { id: "n1", label: "N1", kind: "service", lane: "a", row: 0 },
+        { id: "n2", label: "N2", kind: "service", lane: "a", row: 0, subtitle: "s" },
+        { id: "chart", label: "C", kind: "queue", lane: "b", row: 0, size: "chart" },
+        { id: "extra", label: "Extra", kind: "service", lane: "b", row: 1 },
+      ],
+    });
+    expect(
+      frameFor("down", { lanes: compact.lanes, nodes: compact.nodes, edges: [] }, heights)
+        .laneCross,
+    ).toBe(heights.chart);
   });
 });

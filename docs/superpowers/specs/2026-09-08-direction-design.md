@@ -48,7 +48,7 @@ type Frame = {
 
 | | `"right"` (today) | `"down"` |
 |---|---|---|
-| `laneCross` | `LANE_CONTENT_WIDTH` (372) | max over every seated row of `sum(cardHeight) + CARD_GAP_X × (n−1)` |
+| `laneCross` | `LANE_CONTENT_WIDTH` (372) | `max(heights.chart, tallest stacked row)` |
 | `crossStart` / `crossEnd` | `LANE_PADDING_X` / `LANE_PADDING_X` (16) | `LANE_HEADER_STRIP` (48) / `LANE_BOTTOM_PADDING` (20) |
 | `alongStart` / `alongEnd` | `CONTENT_TOP − LANE_TOP` (48) / `LANE_BOTTOM_PADDING` (20) | `LANE_PADDING_X` / `LANE_PADDING_X` |
 | `along(node)` | `cardHeight(node)` | `LANE_CONTENT_WIDTH` (372) |
@@ -56,7 +56,7 @@ type Frame = {
 | `corridorWidth` | `crossStart + crossEnd + LANE_GAP` | `crossEnd + LANE_GAP` (routes never enter the header strip) |
 | `bandWidth` | `ROW_GAP` | `ROW_GAP` |
 
-`LANE_HEADER_STRIP = 48` is a new constant in `design.ts` (it equals `CONTENT_TOP − LANE_TOP`; `"right"` reads that difference through the frame so the number lives in one place). `laneCross` for `"down"` is computed once per layout from seating, so every band is the same height — the same stability rule as today's constant lane width: adding a chart card never moves the bands below it, only makes all bands taller together.
+`LANE_HEADER_STRIP = 48` is a new constant in `design.ts` (it equals `CONTENT_TOP − LANE_TOP`; `"right"` reads that difference through the frame so the number lives in one place). `laneCross` for `"down"` is at least a chart card tall, so a document whose rows fit in that — the ordinary case — has bands that never change height when cards are added, the same guarantee the constant lane width gives `"right"`. A row taller than a chart card grows every band together.
 
 ## Engine changes
 

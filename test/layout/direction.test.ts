@@ -10,6 +10,7 @@ import {
 } from "../../src/layout/design.js";
 import { cardHeight } from "../../src/layout/architecture.js";
 import { frameFor } from "../../src/layout/frame.js";
+import { findView, resolveScope } from "../../src/layout/scope.js";
 import { parseDocument } from "../../src/index.js";
 
 /**
@@ -26,6 +27,7 @@ const CAPTURED = {
   lane: { store: { x: 1288, y: 44, width: 404, height: 504 } },
   size: { width: 2132, height: 564 },
   path: "M1490,232 L1490,284",
+  pill: { x: 1475, y: 250.5, width: 30, height: 15 },
 };
 
 describe("direction right is today's layout", () => {
@@ -44,6 +46,12 @@ describe("direction right is today's layout", () => {
   it("routes the captured edge exactly", () => {
     expect(laid.edges.find(({ edge }) => edge.id === "lake-to-warehouse")?.path).toBe(
       CAPTURED.path,
+    );
+  });
+
+  it("places the captured pill exactly", () => {
+    expect(laid.edges.find(({ edge }) => edge.id === "lake-to-warehouse")?.label?.box).toEqual(
+      CAPTURED.pill,
     );
   });
 
@@ -83,6 +91,43 @@ describe("direction down", () => {
     expect(laneBox("sources").height).toBe(
       LANE_HEADER_STRIP + frame.laneCross + LANE_BOTTOM_PADDING,
     );
+  });
+
+  it("a view scope sizes bands from the scoped graph", () => {
+    const scopedGraph = resolveScope(down, findView(down.views, "storage")!.scope);
+    const scopedFrame = frameFor("down", scopedGraph, DEFAULT_CARD_HEIGHTS);
+    const scopedLaid = layout(down, { view: "storage" });
+    expect(scopedLaid.atlas.lanes["store"]!.height).toBe(
+      LANE_HEADER_STRIP + scopedFrame.laneCross + LANE_BOTTOM_PADDING,
+    );
+  });
+
+  it("does not move earlier or later bands when a compact card is added", () => {
+    const withExtra = parseDocument({
+      ...down,
+      nodes: [
+        ...down.nodes,
+        { id: "extra", label: "Extra", kind: "service", lane: "consume", row: 2 },
+      ],
+    });
+    const extraLaid = layout(withExtra);
+    for (const lane of down.lanes)
+      expect(extraLaid.atlas.lanes[lane.id], lane.id).toEqual(laid.atlas.lanes[lane.id]);
+  });
+
+  it("grows every band together when a row outgrows a chart card", () => {
+    const grown = parseDocument({
+      ...down,
+      nodes: down.nodes.map((node) =>
+        node.id === "reporting-job" ? { ...node, size: 300 } : node,
+      ),
+    });
+    const grownLaid = layout(grown);
+    const heights = ["sources", "ingest", "validate", "store", "consume"].map(
+      (id) => grownLaid.atlas.lanes[id]!.height,
+    );
+    expect(new Set(heights).size).toBe(1);
+    expect(heights[0]).toBeGreaterThan(laneBox("sources").height);
   });
 
   it("keeps every card 372 wide and its declared height tall", () => {

@@ -49,13 +49,14 @@ const halves = (contentWidth: number): number[] => {
 };
 
 /**
- * The tallest stack of cards any row holds, so every band can be the same
- * height. Never shorter than a compact card, so an empty-looking band still
- * reads as a lane.
+ * The tallest stack of cards any row holds. A band is always at least a
+ * chart card tall so that ordinary documents — nothing taller than a chart,
+ * no pair taller than one — keep every band the same height whatever is
+ * added; a taller row is the overflow case and grows every band together.
  */
 const tallestRow = (graph: ScopedGraph, heights: CardHeights): number => {
   const seating = seatNodes(orderLanes(graph.lanes), graph.nodes, graph.edges);
-  let tallest = heights.compact;
+  let tallest = 0;
   for (const rows of seating.rowsByLane.values())
     for (const row of rows) {
       const stacked =
@@ -68,34 +69,40 @@ const tallestRow = (graph: ScopedGraph, heights: CardHeights): number => {
 
 export const frameFor = (direction: Direction, graph: ScopedGraph, heights: CardHeights): Frame => {
   switch (direction) {
-    case "right":
+    case "right": {
+      const crossEnd = LANE_PADDING_X;
+      const crossStartRoutable = LANE_PADDING_X;
       return {
         direction,
         laneCross: LANE_CONTENT_WIDTH,
         crossStart: LANE_PADDING_X,
-        crossEnd: LANE_PADDING_X,
-        crossStartRoutable: LANE_PADDING_X,
+        crossEnd,
+        crossStartRoutable,
         alongStart: LANE_HEADER_STRIP,
         alongEnd: LANE_BOTTOM_PADDING,
         along: (node) => cardHeight(node, heights),
         crossSplit: (row) =>
           row.nodes.length < 2 ? [LANE_CONTENT_WIDTH] : halves(LANE_CONTENT_WIDTH),
-        corridorWidth: LANE_PADDING_X + LANE_GAP + LANE_PADDING_X,
+        corridorWidth: crossStartRoutable + LANE_GAP + crossEnd,
         bandWidth: ROW_GAP,
       };
-    case "down":
+    }
+    case "down": {
+      const crossEnd = LANE_BOTTOM_PADDING;
+      const crossStartRoutable = 0;
       return {
         direction,
-        laneCross: tallestRow(graph, heights),
+        laneCross: Math.max(heights.chart, tallestRow(graph, heights)),
         crossStart: LANE_HEADER_STRIP,
-        crossEnd: LANE_BOTTOM_PADDING,
-        crossStartRoutable: 0,
+        crossEnd,
+        crossStartRoutable,
         alongStart: LANE_PADDING_X,
         alongEnd: LANE_PADDING_X,
         along: () => LANE_CONTENT_WIDTH,
         crossSplit: (row) => row.nodes.map((node) => cardHeight(node, heights)),
-        corridorWidth: LANE_BOTTOM_PADDING + LANE_GAP,
+        corridorWidth: crossStartRoutable + LANE_GAP + crossEnd,
         bandWidth: ROW_GAP,
       };
+    }
   }
 };
