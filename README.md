@@ -73,8 +73,8 @@ type LensDocumentInput = {
     label;
     kind: NodeKind;
     lane;
-    row?: number; // explicit row in the lane; omitted → derived from edges
-    size?: "compact" | "chart" | number; // card height; chart reserves a body slot
+    row?: number;
+    size?: "compact" | "chart" | number;
     status?: Status;
     badges?: { label; tone? }[];
     group?;
@@ -105,7 +105,9 @@ type Status = "neutral" | "positive" | "caution" | "critical";
 ```
 
 Two nodes with the same `row` in one lane sit side by side; a third throws
-`ROW_OVERFULL`. Status affects colour only.
+`ROW_OVERFULL`. Status affects colour only. Omit `row` to derive it from
+edges. `size: "chart"` reserves a body slot; a number is a height in
+pixels.
 
 ### `Diagram` props
 
