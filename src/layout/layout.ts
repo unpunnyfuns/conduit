@@ -1,4 +1,4 @@
-import type { Edge, LensDocument, View, ViewScope } from "../schema/document.js";
+import type { Edge, ConduitDocument, View, ViewScope } from "../schema/document.js";
 import type { Status } from "../schema/primitives.js";
 import type { PlacedLane, PlacedNode } from "./architecture.js";
 import { canvasFor, union, type Canvas } from "./bounds.js";
@@ -11,7 +11,7 @@ import {
   type CardHeights,
 } from "./design.js";
 import { curveBounds, pathOf, shiftCurve } from "./edges.js";
-import { LensLayoutError } from "./errors.js";
+import { ConduitLayoutError } from "./errors.js";
 import { roundCoord, type Box } from "./geometry.js";
 import { placeLabelPills } from "./labels.js";
 import { findView, resolveScope } from "./scope.js";
@@ -50,7 +50,7 @@ const WHOLE_DOCUMENT: ViewScope = { kind: "all" };
 const requireView = (views: readonly View[], id: string): View => {
   const view = findView(views, id);
   if (view === undefined)
-    throw new LensLayoutError("UNKNOWN_VIEW", `this document has no view '${id}'`);
+    throw new ConduitLayoutError("UNKNOWN_VIEW", `this document has no view '${id}'`);
   return view;
 };
 
@@ -77,12 +77,12 @@ const badgeStrip = (placed: PlacedNode): Box | undefined =>
  * so a diagram never rearranges itself between two renders that barely
  * changed anything.
  */
-export const layout = (doc: LensDocument, options: LayoutOptions = {}): Layout => {
+export const layout = (doc: ConduitDocument, options: LayoutOptions = {}): Layout => {
   const heights: CardHeights = { ...DEFAULT_CARD_HEIGHTS, ...options.cardHeights };
   const view = options.view === undefined ? undefined : requireView(doc.views, options.view);
   const graph = resolveScope(doc, view?.scope ?? WHOLE_DOCUMENT);
   if (graph.nodes.length === 0)
-    throw new LensLayoutError("NOTHING_TO_RENDER", "no nodes are in scope for this view");
+    throw new ConduitLayoutError("NOTHING_TO_RENDER", "no nodes are in scope for this view");
 
   const { layout: placed, routed } = relieveCongestion(graph, heights);
   const pills = placeLabelPills(routed);

@@ -1,9 +1,9 @@
-import type { Edge, Lane, LensNode } from "../schema/document.js";
-import { LensLayoutError } from "./errors.js";
+import type { Edge, Lane, ConduitNode } from "../schema/document.js";
+import { ConduitLayoutError } from "./errors.js";
 import { rankNodes } from "./rank.js";
 
 /** One occupied row of one lane: a single card, or two side by side. */
-export type SeatedRow = { grid: number; nodes: LensNode[] };
+export type SeatedRow = { grid: number; nodes: ConduitNode[] };
 
 export type Seating = {
   rowsByLane: Map<string, SeatedRow[]>;
@@ -27,7 +27,7 @@ export type Seating = {
  */
 export const seatNodes = (
   orderedLanes: readonly Lane[],
-  nodes: readonly LensNode[],
+  nodes: readonly ConduitNode[],
   edges: readonly Edge[],
 ): Seating => {
   const laneIndex = new Map(orderedLanes.map((lane, index) => [lane.id, index]));
@@ -69,7 +69,7 @@ export const seatNodes = (
 
 /** Rank values in use, in order, mapped onto contiguous rows. */
 const compressRanks = (
-  nodes: readonly LensNode[],
+  nodes: readonly ConduitNode[],
   ranks: ReadonlyMap<string, number>,
 ): Map<number, number> => {
   const used = [...new Set(nodes.map((node) => ranks.get(node.id) ?? 0))].sort((a, b) => a - b);
@@ -80,8 +80,8 @@ const identityRows = (ranks: ReadonlyMap<string, number>): Map<number, number> =
   new Map([...new Set(ranks.values())].map((rank) => [rank, rank]));
 
 /** Explicit rows, grouped: a row holds at most two cards, in array order. */
-const pinRows = (pinned: readonly LensNode[]): SeatedRow[] => {
-  const byRow = new Map<number, LensNode[]>();
+const pinRows = (pinned: readonly ConduitNode[]): SeatedRow[] => {
+  const byRow = new Map<number, ConduitNode[]>();
   for (const node of pinned) {
     const grid = node.row ?? 0;
     const list = byRow.get(grid) ?? [];
@@ -93,7 +93,7 @@ const pinRows = (pinned: readonly LensNode[]): SeatedRow[] => {
     .sort(([a], [b]) => a - b)
     .map(([grid, members]) => {
       if (members.length > 2)
-        throw new LensLayoutError(
+        throw new ConduitLayoutError(
           "ROW_OVERFULL",
           `lane '${members[0]?.lane}' row ${grid} holds ${members.length} nodes; a row holds at most two`,
         );
@@ -109,7 +109,7 @@ type Barycenters = {
 };
 
 const barycenters = (
-  nodes: readonly LensNode[],
+  nodes: readonly ConduitNode[],
   edges: readonly Edge[],
   ranks: ReadonlyMap<string, number>,
   laneIndex: ReadonlyMap<string, number>,
@@ -145,14 +145,14 @@ const mean = (values: readonly number[]): number | undefined =>
  * each card's partners are, with document order as the stable tiebreak.
  */
 const seatLane = (
-  members: readonly LensNode[],
+  members: readonly ConduitNode[],
   ranks: ReadonlyMap<string, number>,
   rowOfRank: ReadonlyMap<number, number>,
   keys: Barycenters,
   docIndex: ReadonlyMap<string, number>,
   claimed: ReadonlySet<number>,
 ): SeatedRow[] => {
-  const doc = (node: LensNode): number => docIndex.get(node.id) ?? 0;
+  const doc = (node: ConduitNode): number => docIndex.get(node.id) ?? 0;
   const sorted = [...members].sort((a, b) => {
     const row =
       (rowOfRank.get(ranks.get(a.id) ?? 0) ?? 0) - (rowOfRank.get(ranks.get(b.id) ?? 0) ?? 0);
@@ -162,7 +162,7 @@ const seatLane = (
     return doc(a) - doc(b);
   });
 
-  const rows: { grid: number; rank: number; nodes: LensNode[] }[] = [];
+  const rows: { grid: number; rank: number; nodes: ConduitNode[] }[] = [];
   let previous = -1;
 
   for (const node of sorted) {
@@ -190,10 +190,10 @@ const seatLane = (
 };
 
 const leansLeft = (
-  node: LensNode,
-  other: LensNode,
+  node: ConduitNode,
+  other: ConduitNode,
   keys: Barycenters,
-  doc: (node: LensNode) => number,
+  doc: (node: ConduitNode) => number,
 ): boolean => {
   const side = (keys.side.get(node.id) ?? 0) - (keys.side.get(other.id) ?? 0);
   if (side !== 0) return side < 0;

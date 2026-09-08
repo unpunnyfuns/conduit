@@ -3,9 +3,9 @@ import { render } from "vitest-browser-react";
 import { Badge } from "../../src/components/Badge.js";
 import { Card } from "../../src/components/Card.js";
 import { KindIcon } from "../../src/components/icons.js";
-import type { LensNode } from "../../src/index.js";
+import type { ConduitNode } from "../../src/index.js";
 
-const node: LensNode = {
+const node: ConduitNode = {
   id: "kafka",
   label: "Kafka ingest",
   kind: "queue",

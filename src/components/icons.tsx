@@ -2,8 +2,8 @@ import type { NodeKind } from "../schema/primitives.js";
 import { assertNever } from "../assert.js";
 import { cn } from "../cn.js";
 
-const FILL = "fill-lens-muted";
-const STROKE = "fill-none stroke-lens-muted stroke-[1.4]";
+const FILL = "fill-conduit-muted";
+const STROKE = "fill-none stroke-conduit-muted stroke-[1.4]";
 
 const Stroked = ({ d }: { d: string }) => <path className={STROKE} d={d} />;
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LensDocumentError, parseDocument, safeParseDocument } from "../../src/index.js";
+import { ConduitDocumentError, parseDocument, safeParseDocument } from "../../src/index.js";
 
 const minimal = {
   version: 1,
@@ -28,7 +28,7 @@ describe("parseDocument", () => {
   });
 
   it("rejects an unknown field", () => {
-    expect(() => parseDocument({ ...minimal, provenance: {} })).toThrow(LensDocumentError);
+    expect(() => parseDocument({ ...minimal, provenance: {} })).toThrow(ConduitDocumentError);
   });
 
   it("rejects a node in an unknown lane", () => {
@@ -88,6 +88,6 @@ describe("parseDocument", () => {
   });
 
   it("rejects a version other than 1", () => {
-    expect(() => parseDocument({ ...minimal, version: 2 })).toThrow(LensDocumentError);
+    expect(() => parseDocument({ ...minimal, version: 2 })).toThrow(ConduitDocumentError);
   });
 });

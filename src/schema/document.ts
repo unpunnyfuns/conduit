@@ -28,7 +28,7 @@ export const NodeSize = z.union([
 ]);
 export type NodeSize = z.infer<typeof NodeSize>;
 
-export const LensNode = z.strictObject({
+export const ConduitNode = z.strictObject({
   id: Id,
   label: Label,
   kind: NodeKind,
@@ -41,7 +41,7 @@ export const LensNode = z.strictObject({
   badges: z.array(Badge).max(6).default([]),
   size: NodeSize.default("compact"),
 });
-export type LensNode = z.infer<typeof LensNode>;
+export type ConduitNode = z.infer<typeof ConduitNode>;
 
 export const Edge = z.strictObject({
   id: Id,
@@ -104,14 +104,14 @@ export const View: z.ZodType<View, ViewInput> = z.lazy(() =>
   }),
 );
 
-export const LensDocument = z.strictObject({
+export const ConduitDocument = z.strictObject({
   version: z.literal(1),
   title: Label,
   summary: Summary.optional(),
   lanes: z.array(Lane).min(1).max(16),
-  nodes: z.array(LensNode).min(1).max(256),
+  nodes: z.array(ConduitNode).min(1).max(256),
   edges: z.array(Edge).max(512).default([]),
   views: z.array(View).max(32).default([]),
 });
-export type LensDocument = z.infer<typeof LensDocument>;
-export type LensDocumentInput = z.input<typeof LensDocument>;
+export type ConduitDocument = z.infer<typeof ConduitDocument>;
+export type ConduitDocumentInput = z.input<typeof ConduitDocument>;

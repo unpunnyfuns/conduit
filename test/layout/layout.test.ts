@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ingress } from "../../example/data/ingress.js";
 import { parseDocument } from "../../src/index.js";
-import { layout, LensLayoutError } from "../../src/layout.js";
+import { layout, ConduitLayoutError } from "../../src/layout.js";
 
 const boxesOf = (doc: typeof ingress) =>
   new Map(
@@ -94,11 +94,11 @@ describe("layout()", () => {
   });
 
   it("throws UNKNOWN_VIEW", () => {
-    expect(() => layout(ingress, { view: "nope" })).toThrow(LensLayoutError);
+    expect(() => layout(ingress, { view: "nope" })).toThrow(ConduitLayoutError);
     try {
       layout(ingress, { view: "nope" });
     } catch (error) {
-      expect((error as LensLayoutError).code).toBe("UNKNOWN_VIEW");
+      expect((error as ConduitLayoutError).code).toBe("UNKNOWN_VIEW");
     }
   });
 
@@ -113,11 +113,11 @@ describe("layout()", () => {
       nodes: [{ id: "n", label: "N", kind: "service", lane: "a" }],
       views: [{ id: "v", title: "V", scope: { kind: "selection", lanes: ["b"] } }],
     });
-    expect(() => layout(doc, { view: "v" })).toThrow(LensLayoutError);
+    expect(() => layout(doc, { view: "v" })).toThrow(ConduitLayoutError);
     try {
       layout(doc, { view: "v" });
     } catch (error) {
-      expect((error as LensLayoutError).code).toBe("NOTHING_TO_RENDER");
+      expect((error as ConduitLayoutError).code).toBe("NOTHING_TO_RENDER");
     }
   });
 

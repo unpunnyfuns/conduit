@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseDocument, type Edge, type LensNode } from "../../src/index.js";
-import { LensLayoutError } from "../../src/layout/errors.js";
+import { parseDocument, type Edge, type ConduitNode } from "../../src/index.js";
+import { ConduitLayoutError } from "../../src/layout/errors.js";
 import { rankNodes } from "../../src/layout/rank.js";
 import { seatNodes } from "../../src/layout/seating.js";
 
-const node = (id: string, lane: string, extra: Partial<LensNode> = {}): LensNode => ({
+const node = (id: string, lane: string, extra: Partial<ConduitNode> = {}): ConduitNode => ({
   id,
   label: id,
   kind: "other",
@@ -110,7 +110,7 @@ describe("explicit rows", () => {
         [node("p", "a", { row: 0 }), node("q", "a", { row: 0 }), node("r", "a", { row: 0 })],
         [],
       ),
-    ).toThrow(LensLayoutError);
+    ).toThrow(ConduitLayoutError);
     try {
       seatNodes(
         lanes,
@@ -118,7 +118,7 @@ describe("explicit rows", () => {
         [],
       );
     } catch (error) {
-      expect((error as LensLayoutError).code).toBe("ROW_OVERFULL");
+      expect((error as ConduitLayoutError).code).toBe("ROW_OVERFULL");
     }
   });
 

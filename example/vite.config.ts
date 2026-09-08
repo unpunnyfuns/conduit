@@ -7,6 +7,6 @@ export default defineConfig({
   root: fileURLToPath(new URL(".", import.meta.url)),
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: { "@unpunnyfuns/lens": fileURLToPath(new URL("../src/index.ts", import.meta.url)) },
+    alias: { "@unpunnyfuns/conduit": fileURLToPath(new URL("../src/index.ts", import.meta.url)) },
   },
 });

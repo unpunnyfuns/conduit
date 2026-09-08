@@ -1,5 +1,5 @@
 {
-  "name": "@unpunnyfuns/lens",
+  "name": "@unpunnyfuns/conduit",
   "version": "0.1.0",
   "description": "Lane-based architecture diagrams for React, with live content in every card.",
   "keywords": [
@@ -12,7 +12,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/unpunnyfuns/lens.git"
+    "url": "git+https://github.com/unpunnyfuns/conduit.git"
   },
   "files": [
     "dist",

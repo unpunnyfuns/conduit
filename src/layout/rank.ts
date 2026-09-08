@@ -1,4 +1,4 @@
-import type { Edge, LensNode } from "../schema/document.js";
+import type { Edge, ConduitNode } from "../schema/document.js";
 
 /**
  * Layer index per node: how far down the diagram it sits.
@@ -12,7 +12,7 @@ import type { Edge, LensNode } from "../schema/document.js";
  * can push a node further down, never above something that feeds it.
  */
 export const rankNodes = (
-  nodes: readonly LensNode[],
+  nodes: readonly ConduitNode[],
   edges: readonly Edge[],
   hints: Readonly<Record<string, number>>,
 ): Map<string, number> => {
@@ -53,7 +53,7 @@ export const rankNodes = (
  * rather than by iteration order of a map.
  */
 const forwardEdgesWithoutCycles = (
-  nodes: readonly LensNode[],
+  nodes: readonly ConduitNode[],
   forward: ReadonlyMap<string, readonly string[]>,
 ): [string, string][] => {
   const kept: [string, string][] = [];

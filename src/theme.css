@@ -1,63 +1,63 @@
 /*
- * lens design tokens. Defaults are pr-lens's palette so the look survives
+ * conduit design tokens. Defaults are pr-lens's palette so the look survives
  * verbatim; override any token in your own @theme or .dark block.
  */
 @theme {
-  --color-lens-bg: #f4f5f7;
-  --color-lens-dot: rgb(140 149 159 / 0.5);
-  --color-lens-lane: rgb(255 255 255 / 0.55);
-  --color-lens-card: #ffffff;
-  --color-lens-card-border: #d1d9e0;
-  --color-lens-fg: #1f2328;
-  --color-lens-muted: #59636e;
-  --color-lens-chip: #f1f3f5;
-  --color-lens-edge: #8c959f;
-  --color-lens-pill: #ffffff;
-  --color-lens-pill-border: #d8dee4;
-  --color-lens-shadow: rgb(31 35 40 / 0.14);
+  --color-conduit-bg: #f4f5f7;
+  --color-conduit-dot: rgb(140 149 159 / 0.5);
+  --color-conduit-lane: rgb(255 255 255 / 0.55);
+  --color-conduit-card: #ffffff;
+  --color-conduit-card-border: #d1d9e0;
+  --color-conduit-fg: #1f2328;
+  --color-conduit-muted: #59636e;
+  --color-conduit-chip: #f1f3f5;
+  --color-conduit-edge: #8c959f;
+  --color-conduit-pill: #ffffff;
+  --color-conduit-pill-border: #d8dee4;
+  --color-conduit-shadow: rgb(31 35 40 / 0.14);
 
-  --color-lens-positive: #1f883d;
-  --color-lens-positive-fill: #b9f0c4;
-  --color-lens-positive-text: #116329;
-  --color-lens-positive-border: rgb(31 136 61 / 0.55);
+  --color-conduit-positive: #1f883d;
+  --color-conduit-positive-fill: #b9f0c4;
+  --color-conduit-positive-text: #116329;
+  --color-conduit-positive-border: rgb(31 136 61 / 0.55);
 
-  --color-lens-caution: #bf8700;
-  --color-lens-caution-fill: #fae17d;
-  --color-lens-caution-text: #7d4e00;
-  --color-lens-caution-border: rgb(154 103 0 / 0.55);
+  --color-conduit-caution: #bf8700;
+  --color-conduit-caution-fill: #fae17d;
+  --color-conduit-caution-text: #7d4e00;
+  --color-conduit-caution-border: rgb(154 103 0 / 0.55);
 
-  --color-lens-critical: #cf222e;
-  --color-lens-critical-fill: #ffcecb;
-  --color-lens-critical-text: #a40e26;
-  --color-lens-critical-border: rgb(207 34 46 / 0.5);
+  --color-conduit-critical: #cf222e;
+  --color-conduit-critical-fill: #ffcecb;
+  --color-conduit-critical-text: #a40e26;
+  --color-conduit-critical-border: rgb(207 34 46 / 0.5);
 }
 
 .dark {
-  --color-lens-bg: #0d1117;
-  --color-lens-dot: rgb(110 118 129 / 0.22);
-  --color-lens-lane: rgb(110 118 129 / 0.07);
-  --color-lens-card: #1c2128;
-  --color-lens-card-border: #3d444d;
-  --color-lens-fg: #e6edf3;
-  --color-lens-muted: #9198a1;
-  --color-lens-chip: rgb(110 118 129 / 0.18);
-  --color-lens-edge: #6e7681;
-  --color-lens-pill: #0d1117;
-  --color-lens-pill-border: #21262d;
-  --color-lens-shadow: rgb(0 0 0 / 0.28);
+  --color-conduit-bg: #0d1117;
+  --color-conduit-dot: rgb(110 118 129 / 0.22);
+  --color-conduit-lane: rgb(110 118 129 / 0.07);
+  --color-conduit-card: #1c2128;
+  --color-conduit-card-border: #3d444d;
+  --color-conduit-fg: #e6edf3;
+  --color-conduit-muted: #9198a1;
+  --color-conduit-chip: rgb(110 118 129 / 0.18);
+  --color-conduit-edge: #6e7681;
+  --color-conduit-pill: #0d1117;
+  --color-conduit-pill-border: #21262d;
+  --color-conduit-shadow: rgb(0 0 0 / 0.28);
 
-  --color-lens-positive: #3fb950;
-  --color-lens-positive-fill: rgb(46 160 67 / 0.15);
-  --color-lens-positive-text: #3fb950;
-  --color-lens-positive-border: rgb(63 185 80 / 0.4);
+  --color-conduit-positive: #3fb950;
+  --color-conduit-positive-fill: rgb(46 160 67 / 0.15);
+  --color-conduit-positive-text: #3fb950;
+  --color-conduit-positive-border: rgb(63 185 80 / 0.4);
 
-  --color-lens-caution: #d29922;
-  --color-lens-caution-fill: rgb(187 128 9 / 0.15);
-  --color-lens-caution-text: #d29922;
-  --color-lens-caution-border: rgb(210 153 34 / 0.4);
+  --color-conduit-caution: #d29922;
+  --color-conduit-caution-fill: rgb(187 128 9 / 0.15);
+  --color-conduit-caution-text: #d29922;
+  --color-conduit-caution-border: rgb(210 153 34 / 0.4);
 
-  --color-lens-critical: #f85149;
-  --color-lens-critical-fill: rgb(248 81 73 / 0.12);
-  --color-lens-critical-text: #f85149;
-  --color-lens-critical-border: rgb(248 81 73 / 0.4);
+  --color-conduit-critical: #f85149;
+  --color-conduit-critical-fill: rgb(248 81 73 / 0.12);
+  --color-conduit-critical-text: #f85149;
+  --color-conduit-critical-border: rgb(248 81 73 / 0.4);
 }

@@ -1,7 +1,7 @@
-import { parseDocument, type LensDocument } from "../../src/index.js";
+import { parseDocument, type ConduitDocument } from "../../src/index.js";
 
 /** The first real consumer: data entering the organisation, hand-authored. */
-export const ingress: LensDocument = parseDocument({
+export const ingress: ConduitDocument = parseDocument({
   version: 1,
   title: "Data ingress",
   summary: "How data gets from outside the organisation into the warehouse.",

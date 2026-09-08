@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { LensDocument, LensNode } from "../schema/document.js";
+import type { ConduitDocument, ConduitNode } from "../schema/document.js";
 import { cn } from "../cn.js";
 import { DEFAULT_CARD_HEIGHTS, type CardHeights } from "../layout/design.js";
 import { layout } from "../layout/layout.js";
@@ -8,7 +8,7 @@ import { EdgeLayer } from "./EdgeLayer.js";
 import { LaneBand } from "./Lane.js";
 
 export type DiagramProps = {
-  doc: LensDocument;
+  doc: ConduitDocument;
   /** Id of a view to draw. Omitted draws the whole document. */
   view?: string;
   /** Ids of lanes, nodes or edges to keep lit; everything else dims. */
@@ -21,10 +21,10 @@ export type DiagramProps = {
   /** Scales the canvas down to the viewport's width. Never scales up. */
   fit?: boolean;
   /** Fills the body slot of every card that has one. */
-  children?: (node: LensNode) => ReactNode;
+  children?: (node: ConduitNode) => ReactNode;
 };
 
-const headerHeightOf = (node: LensNode, heights: CardHeights): number =>
+const headerHeightOf = (node: ConduitNode, heights: CardHeights): number =>
   node.subtitle === undefined ? heights.compact : heights.withSubtitle;
 
 /**
@@ -33,7 +33,7 @@ const headerHeightOf = (node: LensNode, heights: CardHeights): number =>
  * never triggers a relayout.
  *
  * The root (`role="figure"`) is a scroll viewport; the fixed-size drawing
- * itself is `[data-lens-canvas]` inside it, scaled down to the viewport's
+ * itself is `[data-conduit-canvas]` inside it, scaled down to the viewport's
  * width when `fit` is set. Atlas coordinates from `layout()` are relative to
  * the canvas, not the viewport.
  */
@@ -123,8 +123,8 @@ export const Diagram = ({
       className={cn("relative max-w-full overflow-auto", className)}
     >
       <div
-        data-lens-canvas
-        className="relative rounded-xl bg-lens-bg bg-[radial-gradient(var(--color-lens-dot)_1px,transparent_1px)] bg-[size:18px_18px] text-lens-fg"
+        data-conduit-canvas
+        className="relative rounded-xl bg-conduit-bg bg-[radial-gradient(var(--color-conduit-dot)_1px,transparent_1px)] bg-[size:18px_18px] text-conduit-fg"
         style={{
           width: laid.width,
           height: laid.height,

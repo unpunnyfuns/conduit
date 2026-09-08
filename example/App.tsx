@@ -1,4 +1,4 @@
-import { Diagram } from "@unpunnyfuns/lens";
+import { Diagram } from "@unpunnyfuns/conduit";
 import { useState } from "react";
 import { ingress } from "./data/ingress.js";
 import { Sparkline } from "./Sparkline.js";
@@ -22,25 +22,25 @@ export const App = () => {
 
   return (
     <div className={dark ? "dark" : undefined}>
-      <div className="min-h-screen bg-lens-bg p-6 text-lens-fg">
+      <div className="min-h-screen bg-conduit-bg p-6 text-conduit-fg">
         <header className="mb-4 flex flex-wrap items-center gap-3">
           <h1 className="text-lg font-semibold">{ingress.title}</h1>
           <button
             type="button"
-            className="rounded border border-lens-card-border px-2 py-1 text-sm"
+            className="rounded border border-conduit-card-border px-2 py-1 text-sm"
             onClick={() => setDark((value) => !value)}
           >
             {dark ? "Light" : "Dark"}
           </button>
           <button
             type="button"
-            className="rounded border border-lens-card-border px-2 py-1 text-sm"
+            className="rounded border border-conduit-card-border px-2 py-1 text-sm"
             onClick={() => setFit((value) => !value)}
           >
             {fit ? "Unfit" : "Fit"}
           </button>
           <select
-            className="rounded border border-lens-card-border bg-lens-card px-2 py-1 text-sm"
+            className="rounded border border-conduit-card-border bg-conduit-card px-2 py-1 text-sm"
             value={view ?? ""}
             onChange={(event) =>
               setView(event.target.value === "" ? undefined : event.target.value)
@@ -80,7 +80,7 @@ export const App = () => {
             }
           </Diagram>
 
-          <aside className="w-64 rounded-xl bg-lens-lane p-3 font-mono text-xs text-lens-muted">
+          <aside className="w-64 rounded-xl bg-conduit-lane p-3 font-mono text-xs text-conduit-muted">
             <div className="mb-2 font-bold uppercase tracking-[0.12em]">Events</div>
             {log.length === 0 ? (
               <div>Click a card or an edge.</div>

@@ -1,4 +1,4 @@
-# @unpunnyfuns/lens
+# @unpunnyfuns/conduit
 
 Lane-based architecture diagrams for React, with live content in every card.
 
@@ -10,7 +10,7 @@ content, such as a chart.
 ## Install
 
 ```bash
-npm install @unpunnyfuns/lens
+npm install @unpunnyfuns/conduit
 ```
 
 Peers: `react ^19`, `react-dom ^19`, `tailwindcss ^4`.
@@ -19,8 +19,8 @@ In your Tailwind CSS entry:
 
 ```css
 @import "tailwindcss";
-@import "@unpunnyfuns/lens/theme.css";
-@source "../node_modules/@unpunnyfuns/lens";
+@import "@unpunnyfuns/conduit/theme.css";
+@source "../node_modules/@unpunnyfuns/conduit";
 ```
 
 The `@source` line is required: the components use Tailwind utilities and
@@ -28,16 +28,16 @@ Tailwind only emits the classes it can see.
 
 ## Structure
 
-| Path                          | Contents                                                                                |
-| ----------------------------- | --------------------------------------------------------------------------------------- |
-| `@unpunnyfuns/lens`           | `Diagram`, `Card`, `LaneBand`, `EdgeLayer`, `Badge`, `KindIcon`, `parseDocument`, types |
-| `@unpunnyfuns/lens/layout`    | `layout()` — the pure engine, no React                                                  |
-| `@unpunnyfuns/lens/theme.css` | `--color-lens-*` tokens with light and `.dark` values                                   |
+| Path                             | Contents                                                                                |
+| -------------------------------- | --------------------------------------------------------------------------------------- |
+| `@unpunnyfuns/conduit`           | `Diagram`, `Card`, `LaneBand`, `EdgeLayer`, `Badge`, `KindIcon`, `parseDocument`, types |
+| `@unpunnyfuns/conduit/layout`    | `layout()` — the pure engine, no React                                                  |
+| `@unpunnyfuns/conduit/theme.css` | `--color-conduit-*` tokens with light and `.dark` values                                |
 
 ## Usage
 
 ```tsx
-import { Diagram, parseDocument } from "@unpunnyfuns/lens";
+import { Diagram, parseDocument } from "@unpunnyfuns/conduit";
 
 const doc = parseDocument({
   version: 1,
@@ -63,7 +63,7 @@ export const Ingress = () => (
 ### Document
 
 ```ts
-type LensDocumentInput = {
+type ConduitDocumentInput = {
   version: 1;
   title: string;
   summary?: string;
@@ -113,7 +113,7 @@ pixels.
 
 | Prop                         | Type                                  | Notes                                         |
 | ---------------------------- | ------------------------------------- | --------------------------------------------- |
-| `doc`                        | `LensDocument`                        | from `parseDocument`                          |
+| `doc`                        | `ConduitDocument`                     | from `parseDocument`                          |
 | `view`                       | `string`                              | id of a view to draw                          |
 | `selected`                   | `string[]`                            | ids to keep lit; everything else dims         |
 | `onNodeClick`, `onEdgeClick` | `(id) => void`                        | cards become buttons when set                 |
@@ -125,7 +125,7 @@ pixels.
 The root is a scroll viewport; size it with `className`. With `fit` the
 canvas scales down to the viewport width (never up).
 
-`layout()` runs during render and throws `LensLayoutError`
+`layout()` runs during render and throws `ConduitLayoutError`
 (`UNKNOWN_VIEW`, `ROW_OVERFULL`, `NOTHING_TO_RENDER`) for a document it
 cannot draw; wrap `Diagram` in an error boundary if documents are
 user-supplied.
@@ -133,7 +133,7 @@ user-supplied.
 ### Layout without React
 
 ```ts
-import { layout } from "@unpunnyfuns/lens/layout";
+import { layout } from "@unpunnyfuns/conduit/layout";
 
 const { width, height, nodes, edges, atlas } = layout(doc, { view: "storage" });
 ```

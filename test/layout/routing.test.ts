@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseDocument, type LensDocument } from "../../src/index.js";
+import { parseDocument, type ConduitDocument } from "../../src/index.js";
 import { layoutArchitecture } from "../../src/layout/architecture.js";
 import { DEFAULT_CARD_HEIGHTS } from "../../src/layout/design.js";
 import { curveBounds, pathOf, routeEdges, shiftCurve } from "../../src/layout/edges.js";
 
-const routesOf = (doc: LensDocument) =>
+const routesOf = (doc: ConduitDocument) =>
   routeEdges(
     doc.edges,
     layoutArchitecture(

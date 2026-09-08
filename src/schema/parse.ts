@@ -1,6 +1,6 @@
 import type { z } from "zod";
-import { LensDocument } from "./document.js";
-import { formatIssues, LensDocumentError, type Parsed, type SchemaIssue } from "./errors.js";
+import { ConduitDocument } from "./document.js";
+import { formatIssues, ConduitDocumentError, type Parsed, type SchemaIssue } from "./errors.js";
 import { integrityIssues } from "./integrity.js";
 
 const formatPath = (path: readonly PropertyKey[]): string =>
@@ -16,11 +16,11 @@ const toIssues = (error: z.ZodError): SchemaIssue[] =>
     message: issue.message,
   }));
 
-const fail = (issues: SchemaIssue[]): LensDocumentError => {
+const fail = (issues: SchemaIssue[]): ConduitDocumentError => {
   const first = issues[0];
-  return new LensDocumentError(
+  return new ConduitDocumentError(
     first ? first.code : "INVALID_DOCUMENT",
-    `invalid lens document:\n${formatIssues(issues)}`,
+    `invalid conduit document:\n${formatIssues(issues)}`,
     issues,
   );
 };
@@ -28,9 +28,9 @@ const fail = (issues: SchemaIssue[]): LensDocumentError => {
 /** A document nested deeply enough exhausts the stack inside zod; report it as what it is. */
 const attemptParse = (
   input: unknown,
-): { read: true; value: LensDocument } | { read: false; issues: SchemaIssue[] } => {
+): { read: true; value: ConduitDocument } | { read: false; issues: SchemaIssue[] } => {
   try {
-    const result = LensDocument.safeParse(input);
+    const result = ConduitDocument.safeParse(input);
     return result.success
       ? { read: true, value: result.data }
       : { read: false, issues: toIssues(result.error) };
@@ -46,7 +46,7 @@ const attemptParse = (
 };
 
 /** Structure and referential integrity in one pass. A document that survives this is safe to lay out. */
-export const safeParseDocument = (input: unknown): Parsed<LensDocument> => {
+export const safeParseDocument = (input: unknown): Parsed<ConduitDocument> => {
   const result = attemptParse(input);
   if (!result.read) return { ok: false, error: fail(result.issues) };
   const issues = integrityIssues(result.value);
@@ -54,7 +54,7 @@ export const safeParseDocument = (input: unknown): Parsed<LensDocument> => {
   return { ok: true, value: result.value };
 };
 
-export const parseDocument = (input: unknown): LensDocument => {
+export const parseDocument = (input: unknown): ConduitDocument => {
   const parsed = safeParseDocument(input);
   if (parsed.ok) return parsed.value;
   throw parsed.error;

@@ -8,5 +8,5 @@ export {
 export type { PlacedLane, PlacedNode } from "./layout/architecture.js";
 export { DEFAULT_CARD_HEIGHTS, type CardHeights } from "./layout/design.js";
 export type { Box, Point } from "./layout/geometry.js";
-export { LensLayoutError, type LayoutErrorCode } from "./layout/errors.js";
+export { ConduitLayoutError, type LayoutErrorCode } from "./layout/errors.js";
 export { findView, flattenViews } from "./layout/scope.js";

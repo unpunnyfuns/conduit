@@ -1,4 +1,4 @@
-import type { Lane, LensNode } from "../schema/document.js";
+import type { Lane, ConduitNode } from "../schema/document.js";
 import {
   CARD_GAP_X,
   CONTENT_TOP,
@@ -16,7 +16,7 @@ import type { ScopedGraph } from "./scope.js";
 import { seatNodes, type SeatedRow } from "./seating.js";
 
 export type PlacedNode = {
-  node: LensNode;
+  node: ConduitNode;
   box: Box;
   row: number;
   laneIndex: number;
@@ -56,7 +56,7 @@ export type ArchitectureLayout = {
   grid: LayoutGrid;
 };
 
-export const cardHeight = (node: LensNode, heights: CardHeights): number => {
+export const cardHeight = (node: ConduitNode, heights: CardHeights): number => {
   if (typeof node.size === "number") return node.size;
   if (node.size === "chart") return heights.chart;
   return node.subtitle === undefined ? heights.compact : heights.withSubtitle;

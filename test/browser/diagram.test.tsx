@@ -8,18 +8,22 @@ import { layout } from "../../src/layout.js";
 describe("Diagram", () => {
   it("renders one card per node, one band per lane and one path per edge", async () => {
     const screen = await render(<Diagram doc={ingress} />);
-    expect(screen.container.querySelectorAll("[data-lens-node]").length).toBe(ingress.nodes.length);
-    expect(screen.container.querySelectorAll("[data-lens-lane]").length).toBe(ingress.lanes.length);
+    expect(screen.container.querySelectorAll("[data-conduit-node]").length).toBe(
+      ingress.nodes.length,
+    );
+    expect(screen.container.querySelectorAll("[data-conduit-lane]").length).toBe(
+      ingress.lanes.length,
+    );
     expect(screen.container.querySelectorAll("path[data-edge]").length).toBe(ingress.edges.length);
   });
 
   it("positions cards exactly where the atlas says", async () => {
     const screen = await render(<Diagram doc={ingress} />);
     const laid = layout(ingress);
-    const canvas = screen.container.querySelector("[data-lens-canvas]") as HTMLElement;
+    const canvas = screen.container.querySelector("[data-conduit-canvas]") as HTMLElement;
     const origin = canvas.getBoundingClientRect();
     for (const [id, box] of Object.entries(laid.atlas.nodes)) {
-      const card = screen.container.querySelector(`[data-lens-node='${id}']`) as HTMLElement;
+      const card = screen.container.querySelector(`[data-conduit-node='${id}']`) as HTMLElement;
       const rect = card.getBoundingClientRect();
       expect(rect.left - origin.left, id).toBeCloseTo(box.x, 0);
       expect(rect.top - origin.top, id).toBeCloseTo(box.y, 0);
@@ -31,7 +35,7 @@ describe("Diagram", () => {
   it("sizes itself to the layout", async () => {
     const screen = await render(<Diagram doc={ingress} />);
     const laid = layout(ingress);
-    const canvas = screen.container.querySelector("[data-lens-canvas]") as HTMLElement;
+    const canvas = screen.container.querySelector("[data-conduit-canvas]") as HTMLElement;
     expect(canvas.getBoundingClientRect().width).toBeCloseTo(laid.width, 0);
     expect(canvas.getBoundingClientRect().height).toBeCloseTo(laid.height, 0);
   });
@@ -46,7 +50,7 @@ describe("Diagram", () => {
   it("fit scales down to the viewport width", async () => {
     await page.viewport(800, 600);
     const screen = await render(<Diagram doc={ingress} fit className="w-[500px]" />);
-    const canvas = screen.container.querySelector("[data-lens-canvas]") as HTMLElement;
+    const canvas = screen.container.querySelector("[data-conduit-canvas]") as HTMLElement;
     await expect
       .poll(() => canvas.getBoundingClientRect().width, { timeout: 2000 })
       .toBeCloseTo(500, 0);
@@ -56,7 +60,7 @@ describe("Diagram", () => {
   it("does not scale the canvas without fit", async () => {
     const screen = await render(<Diagram doc={ingress} className="w-[500px]" />);
     const laid = layout(ingress);
-    const canvas = screen.container.querySelector("[data-lens-canvas]") as HTMLElement;
+    const canvas = screen.container.querySelector("[data-conduit-canvas]") as HTMLElement;
     expect(canvas.getBoundingClientRect().width).toBeCloseTo(laid.width, 0);
   });
 
@@ -70,7 +74,7 @@ describe("Diagram", () => {
       ingress.nodes.filter((node) => node.size === "chart").length,
     );
     const inside = screen.container.querySelector(
-      "[data-lens-node='warehouse'] [data-testid='chart-warehouse']",
+      "[data-conduit-node='warehouse'] [data-testid='chart-warehouse']",
     );
     expect(inside).not.toBeNull();
   });
@@ -79,12 +83,12 @@ describe("Diagram", () => {
     const screen = await render(<Diagram doc={ingress} selected={["warehouse"]} />);
     const opacity = (selector: string) =>
       Number(getComputedStyle(screen.container.querySelector(selector) as Element).opacity);
-    expect(opacity("[data-lens-node='warehouse']")).toBe(1);
-    expect(opacity("[data-lens-node='partner-api']")).toBeLessThan(1);
+    expect(opacity("[data-conduit-node='warehouse']")).toBe(1);
+    expect(opacity("[data-conduit-node='partner-api']")).toBeLessThan(1);
     expect(opacity("g[data-edge-group='warehouse-to-ui']")).toBe(1);
     expect(opacity("g[data-edge-group='partner-to-kafka']")).toBeLessThan(1);
-    expect(opacity("[data-lens-lane='store']")).toBe(1);
-    expect(opacity("[data-lens-lane='sources']")).toBeLessThan(1);
+    expect(opacity("[data-conduit-lane='store']")).toBe(1);
+    expect(opacity("[data-conduit-lane='sources']")).toBeLessThan(1);
   });
 
   it("reports node and edge clicks with ids", async () => {
@@ -104,8 +108,8 @@ describe("Diagram", () => {
 
   it("renders a view's selection", async () => {
     const screen = await render(<Diagram doc={ingress} view="storage" />);
-    expect(screen.container.querySelectorAll("[data-lens-lane]").length).toBe(2);
-    expect(screen.container.querySelector("[data-lens-node='partner-api']")).toBeNull();
+    expect(screen.container.querySelectorAll("[data-conduit-lane]").length).toBe(2);
+    expect(screen.container.querySelector("[data-conduit-node='partner-api']")).toBeNull();
   });
 
   it("is a labelled figure with a text summary of edges", async () => {

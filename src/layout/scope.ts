@@ -1,10 +1,17 @@
-import type { Edge, Lane, LensDocument, LensNode, View, ViewScope } from "../schema/document.js";
+import type {
+  Edge,
+  Lane,
+  ConduitDocument,
+  ConduitNode,
+  View,
+  ViewScope,
+} from "../schema/document.js";
 import { assertNever } from "../assert.js";
 
 /** The slice of a document one SVG draws. */
 export type ScopedGraph = {
   lanes: Lane[];
-  nodes: LensNode[];
+  nodes: ConduitNode[];
   edges: Edge[];
 };
 
@@ -29,7 +36,7 @@ export const flattenViews = (views: readonly View[]): View[] =>
  * name any and exactly those are drawn, name none and the connections between
  * the selected nodes come along.
  */
-export const resolveScope = (doc: LensDocument, scope: ViewScope): ScopedGraph => {
+export const resolveScope = (doc: ConduitDocument, scope: ViewScope): ScopedGraph => {
   switch (scope.kind) {
     case "all":
       return { lanes: [...doc.lanes], nodes: [...doc.nodes], edges: [...doc.edges] };

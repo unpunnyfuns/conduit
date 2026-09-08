@@ -12,24 +12,24 @@ import type { PlacedEdge } from "../layout/layout.js";
 import { STATUSES } from "../schema/primitives.js";
 
 const STROKE: Record<Status, string> = {
-  neutral: "stroke-lens-edge",
-  positive: "stroke-lens-positive",
-  caution: "stroke-lens-caution",
-  critical: "stroke-lens-critical",
+  neutral: "stroke-conduit-edge",
+  positive: "stroke-conduit-positive",
+  caution: "stroke-conduit-caution",
+  critical: "stroke-conduit-critical",
 };
 
 const FILL: Record<Status, string> = {
-  neutral: "fill-lens-edge",
-  positive: "fill-lens-positive",
-  caution: "fill-lens-caution",
-  critical: "fill-lens-critical",
+  neutral: "fill-conduit-edge",
+  positive: "fill-conduit-positive",
+  caution: "fill-conduit-caution",
+  critical: "fill-conduit-critical",
 };
 
 const PILL_TEXT: Record<Status, string> = {
-  neutral: "fill-lens-muted",
-  positive: "fill-lens-positive-text",
-  caution: "fill-lens-caution-text",
-  critical: "fill-lens-critical-text",
+  neutral: "fill-conduit-muted",
+  positive: "fill-conduit-positive-text",
+  caution: "fill-conduit-caution-text",
+  critical: "fill-conduit-critical-text",
 };
 
 const PULSE_RADIUS = 2.6;
@@ -83,7 +83,7 @@ const Pill = ({
 }) => (
   <g>
     <rect
-      className="fill-lens-pill stroke-lens-pill-border stroke-[1]"
+      className="fill-conduit-pill stroke-conduit-pill-border stroke-[1]"
       x={box.x}
       y={box.y}
       width={box.width}

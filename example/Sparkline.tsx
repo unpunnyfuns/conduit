@@ -19,13 +19,13 @@ export const Sparkline = ({ source, unit }: { source: string; unit: string }) =>
       >
         <polyline
           points={points}
-          className="fill-none stroke-lens-positive stroke-[2]"
+          className="fill-none stroke-conduit-positive stroke-[2]"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      <div className="flex justify-between font-mono text-[10px] text-lens-muted">
+      <div className="flex justify-between font-mono text-[10px] text-conduit-muted">
         <span>{source}</span>
-        <span className="text-lens-fg">{`${Math.round(last * 120)} ${unit}`}</span>
+        <span className="text-conduit-fg">{`${Math.round(last * 120)} ${unit}`}</span>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "paths": { "@unpunnyfuns/lens": ["./src/index.ts"] },
+    "paths": { "@unpunnyfuns/conduit": ["./src/index.ts"] },
     "jsx": "react-jsx",
     "strict": true,
     "noUncheckedIndexedAccess": true,

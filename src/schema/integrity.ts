@@ -1,4 +1,4 @@
-import type { LensDocument, View } from "./document.js";
+import type { ConduitDocument, View } from "./document.js";
 import type { SchemaIssue } from "./errors.js";
 
 const duplicates = (ids: readonly string[]): string[] => {
@@ -21,7 +21,7 @@ const flattenViews = (views: readonly View[], prefix: string): { view: View; pat
  * Structural validation says a field holds an id; these checks say the id
  * points at something.
  */
-export const integrityIssues = (doc: LensDocument): SchemaIssue[] => {
+export const integrityIssues = (doc: ConduitDocument): SchemaIssue[] => {
   const issues: SchemaIssue[] = [];
   const broken = (path: string, message: string) =>
     issues.push({ code: "BROKEN_REFERENCE", path, message });
