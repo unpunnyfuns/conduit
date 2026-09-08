@@ -30,4 +30,15 @@ describe("example app", () => {
     expect(after.width).toBeGreaterThan(before.width);
     await expect.element(screen.getByRole("button", { name: "Right" })).toBeVisible();
   });
+
+  it("traces upstream by default when a card is selected", async () => {
+    const screen = await render(<App />);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    const opacity = (selector: string) =>
+      Number(getComputedStyle(screen.container.querySelector(selector) as Element).opacity);
+    await expect
+      .poll(() => opacity("[data-conduit-node='analytics-ui']"), { timeout: 2000 })
+      .toBeLessThan(1);
+    expect(opacity("[data-conduit-node='partner-api']")).toBe(1);
+  });
 });

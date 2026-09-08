@@ -115,16 +115,17 @@ to right; `row` then means column. Default `"right"`.
 
 ### `Diagram` props
 
-| Prop                         | Type                                  | Notes                                         |
-| ---------------------------- | ------------------------------------- | --------------------------------------------- |
-| `doc`                        | `ConduitDocument`                     | from `parseDocument`                          |
-| `view`                       | `string`                              | id of a view to draw                          |
-| `selected`                   | `string[]`                            | ids to keep lit; everything else dims         |
-| `onNodeClick`, `onEdgeClick` | `(id) => void`                        | cards become buttons when set                 |
-| `cardHeights`                | `{ compact?; withSubtitle?; chart? }` | defaults 52 / 62 / 140                        |
-| `className`                  | `string`                              | applied to the scroll viewport                |
-| `fit`                        | `boolean`                             | scale the canvas down to fit; default `false` |
-| `children`                   | `(node) => ReactNode`                 | body slot of every card that has one          |
+| Prop                         | Type                                                   | Notes                                                                             |
+| ---------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| `doc`                        | `ConduitDocument`                                      | from `parseDocument`                                                              |
+| `view`                       | `string`                                               | id of a view to draw                                                              |
+| `selected`                   | `string[]`                                             | ids to keep lit; everything else dims                                             |
+| `highlight`                  | `"neighbours" \| "upstream" \| "downstream" \| "both"` | what a selection lights; traced edges draw at hero weight; default `"neighbours"` |
+| `onNodeClick`, `onEdgeClick` | `(id) => void`                                         | cards become buttons when set                                                     |
+| `cardHeights`                | `{ compact?; withSubtitle?; chart? }`                  | defaults 52 / 62 / 140                                                            |
+| `className`                  | `string`                                               | applied to the scroll viewport                                                    |
+| `fit`                        | `boolean`                                              | scale the canvas down to fit; default `false`                                     |
+| `children`                   | `(node) => ReactNode`                                  | body slot of every card that has one                                              |
 
 The root is a scroll viewport; size it with `className`. With `fit` the
 canvas scales down to the viewport width (never up).
@@ -143,6 +144,15 @@ const { width, height, nodes, edges, atlas } = layout(doc, { view: "storage" });
 ```
 
 Same document, same geometry, every time.
+
+To trace from a selection:
+
+```ts
+import { traceFrom } from "@unpunnyfuns/conduit/layout";
+
+const traced = traceFrom(doc.edges, ["warehouse"], "upstream");
+const litNodeIds = [...traced.nodes];
+```
 
 ## Development
 

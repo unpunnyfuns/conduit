@@ -102,11 +102,18 @@ const Pill = ({
   </g>
 );
 
+const EMPTY: ReadonlySet<string> = new Set();
+
 export type EdgeLayerProps = {
   width: number;
   height: number;
   edges: readonly PlacedEdge[];
   dimmedIds: ReadonlySet<string>;
+  /**
+   * Edges drawn at hero weight without changing their pulses, e.g. a traced path.
+   * An edge the document marks `muted` stays muted.
+   */
+  emphasisedIds?: ReadonlySet<string>;
   onEdgeClick?: (id: string) => void;
 };
 
@@ -115,7 +122,14 @@ export type EdgeLayerProps = {
  * cards; pills are opaque so they read wherever they land, and are drawn
  * last so they pass in front of everything in this layer.
  */
-export const EdgeLayer = ({ width, height, edges, dimmedIds, onEdgeClick }: EdgeLayerProps) => {
+export const EdgeLayer = ({
+  width,
+  height,
+  edges,
+  dimmedIds,
+  emphasisedIds = EMPTY,
+  onEdgeClick,
+}: EdgeLayerProps) => {
   const uid = useId().replace(/:/g, "");
   const marker = (tone: Status) => `${uid}-mk-${tone}`;
 
@@ -145,7 +159,8 @@ export const EdgeLayer = ({ width, height, edges, dimmedIds, onEdgeClick }: Edge
       </defs>
 
       {edges.map(({ edge, path, tone }) => {
-        const hero = edge.emphasis === "hero";
+        const heroPulses = edge.emphasis === "hero";
+        const hero = heroPulses || (emphasisedIds.has(edge.id) && edge.emphasis !== "muted");
         const dimmed = dimmedIds.has(edge.id) || edge.emphasis === "muted";
         return (
           <g
@@ -162,7 +177,7 @@ export const EdgeLayer = ({ width, height, edges, dimmedIds, onEdgeClick }: Edge
               className={cn("fill-none", STROKE[tone], hero ? "stroke-[2.25]" : "stroke-[1.5]")}
               markerEnd={`url(#${marker(tone)})`}
             />
-            {edge.animated && <Pulses id={edge.id} path={path} tone={tone} hero={hero} />}
+            {edge.animated && <Pulses id={edge.id} path={path} tone={tone} hero={heroPulses} />}
             {onEdgeClick !== undefined && (
               <path
                 data-edge-hit={edge.id}

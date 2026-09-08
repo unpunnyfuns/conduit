@@ -3,6 +3,7 @@ import type { ConduitDocument, ConduitNode } from "../schema/document.js";
 import { cn } from "../cn.js";
 import { DEFAULT_CARD_HEIGHTS, type CardHeights } from "../layout/design.js";
 import { layout } from "../layout/layout.js";
+import { traceFrom, type Highlight } from "../layout/trace.js";
 import { Card } from "./Card.js";
 import { EdgeLayer } from "./EdgeLayer.js";
 import { LaneBand } from "./Lane.js";
@@ -13,6 +14,8 @@ export type DiagramProps = {
   view?: string;
   /** Ids of lanes, nodes or edges to keep lit; everything else dims. */
   selected?: readonly string[];
+  /** What a selection lights: neighbours (default), everything upstream, downstream, or both. */
+  highlight?: Highlight;
   onNodeClick?: (id: string) => void;
   onEdgeClick?: (id: string) => void;
   cardHeights?: Partial<CardHeights>;
@@ -41,6 +44,7 @@ export const Diagram = ({
   doc,
   view,
   selected,
+  highlight = "neighbours",
   onNodeClick,
   onEdgeClick,
   cardHeights,
@@ -86,14 +90,17 @@ export const Diagram = ({
 
   const lit = useMemo(() => {
     if (selected === undefined || selected.length === 0) return undefined;
+    const trace = traceFrom(
+      laid.edges.map(({ edge }) => edge),
+      selected,
+      highlight,
+    );
     const ids = new Set(selected);
     const nodes = new Set(
-      laid.nodes.filter(({ node }) => ids.has(node.id)).map(({ node }) => node.id),
+      laid.nodes.filter(({ node }) => trace.nodes.has(node.id)).map(({ node }) => node.id),
     );
     const edges = new Set(
-      laid.edges
-        .filter(({ edge }) => ids.has(edge.id) || nodes.has(edge.from) || nodes.has(edge.to))
-        .map(({ edge }) => edge.id),
+      laid.edges.filter(({ edge }) => trace.edges.has(edge.id)).map(({ edge }) => edge.id),
     );
     const lanesWithLitNode = new Set<string>();
     for (const { node } of laid.nodes) if (nodes.has(node.id)) lanesWithLitNode.add(node.lane);
@@ -103,7 +110,12 @@ export const Diagram = ({
         .map(({ lane }) => lane.id),
     );
     return { nodes, edges, lanes };
-  }, [selected, laid]);
+  }, [selected, highlight, laid]);
+
+  const emphasised = useMemo(
+    () => (lit === undefined || highlight === "neighbours" ? undefined : lit.edges),
+    [lit, highlight],
+  );
 
   const dimmedEdges = useMemo(
     () =>
@@ -153,6 +165,7 @@ export const Diagram = ({
           height={laid.height}
           edges={laid.edges}
           dimmedIds={dimmedEdges}
+          emphasisedIds={emphasised}
           onEdgeClick={onEdgeClick}
         />
 

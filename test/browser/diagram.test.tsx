@@ -91,6 +91,54 @@ describe("Diagram", () => {
     expect(opacity("[data-conduit-lane='sources']")).toBeLessThan(1);
   });
 
+  it("lights the whole upstream path and emphasises its edges", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} selected={["warehouse"]} highlight="upstream" />,
+    );
+    const opacity = (selector: string) =>
+      Number(getComputedStyle(screen.container.querySelector(selector) as Element).opacity);
+    expect(opacity("[data-conduit-node='partner-api']")).toBe(1);
+    expect(opacity("[data-conduit-node='raw-lake']")).toBe(1);
+    expect(opacity("[data-conduit-node='analytics-ui']")).toBeLessThan(1);
+    expect(opacity("g[data-edge-group='partner-to-kafka']")).toBe(1);
+    expect(opacity("g[data-edge-group='warehouse-to-ui']")).toBeLessThan(1);
+    const traced = screen.container.querySelector(
+      "path[data-edge='partner-to-kafka']",
+    ) as SVGPathElement;
+    const untraced = screen.container.querySelector(
+      "path[data-edge='warehouse-to-ui']",
+    ) as SVGPathElement;
+    expect(parseFloat(getComputedStyle(traced).strokeWidth)).toBeCloseTo(2.25, 1);
+    expect(parseFloat(getComputedStyle(untraced).strokeWidth)).toBeCloseTo(1.5, 1);
+  });
+
+  it("keeps a muted edge muted on a traced path", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} selected={["legacy-ftp"]} highlight="upstream" />,
+    );
+    const muted = screen.container.querySelector(
+      "path[data-edge='batch-to-legacy']",
+    ) as SVGPathElement;
+    const mutedGroup = screen.container.querySelector(
+      "g[data-edge-group='batch-to-legacy']",
+    ) as Element;
+    const traced = screen.container.querySelector(
+      "path[data-edge='sftp-to-batch']",
+    ) as SVGPathElement;
+    expect(parseFloat(getComputedStyle(muted).strokeWidth)).toBeCloseTo(1.5, 1);
+    expect(Number(getComputedStyle(mutedGroup).opacity)).toBeLessThan(1);
+    expect(parseFloat(getComputedStyle(traced).strokeWidth)).toBeCloseTo(2.25, 1);
+  });
+
+  it("keeps pulse count unchanged when a traced edge is emphasised", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} selected={["warehouse"]} highlight="upstream" />,
+    );
+    expect(
+      screen.container.querySelectorAll("[data-pulse='partner-to-kafka'] animateMotion").length,
+    ).toBe(1);
+  });
+
   it("reports node and edge clicks with ids", async () => {
     const onNodeClick = vi.fn();
     const onEdgeClick = vi.fn();

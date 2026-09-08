@@ -45,7 +45,7 @@ New prop `highlight?: Highlight` (default `"neighbours"`). `lit` is computed as:
 
 ## EdgeLayer
 
-New prop `emphasisedIds?: ReadonlySet<string>` (default empty). `hero = edge.emphasis === "hero" || emphasisedIds.has(edge.id)` for stroke and glow only; the `Pulses` `hero` flag keeps reading `edge.emphasis`, so emphasis by selection never changes pulse count or timing.
+New prop `emphasisedIds?: ReadonlySet<string>` (default empty). `hero = edge.emphasis === "hero" || emphasisedIds.has(edge.id)` for stroke and glow only; the `Pulses` `hero` flag keeps reading `edge.emphasis`, so emphasis by selection never changes pulse count or timing. An edge the document marks `muted` is never emphasised by selection; the author's de-emphasis wins.
 
 ## Example
 
@@ -53,7 +53,7 @@ New prop `emphasisedIds?: ReadonlySet<string>` (default empty). `hero = edge.emp
 
 ## Tests
 
-`test/layout/trace.test.ts` (Node) on the `ingress` fixture: upstream of `warehouse` reaches exactly `raw-lake, pii-scrubber, schema-validator, kafka-ingest, batch-loader, partner-api, webhooks, sftp-drop` and their connecting edges, not `analytics-ui`, `reporting-job`, `legacy-ftp` or `warehouse-to-ui`; downstream of `kafka-ingest` reaches `schema-validator, pii-scrubber, raw-lake, warehouse, analytics-ui, reporting-job`; `"both"` is the union; `"neighbours"` matches the old rule; a seeded edge id lights only that edge; a synthetic cycle `a→b→a` terminates and lights both; a self-loop is not followed; unknown ids are ignored.
+`test/layout/trace.test.ts` (Node) on the `ingress` fixture: upstream of `warehouse` reaches exactly `raw-lake, pii-scrubber, schema-validator, kafka-ingest, batch-loader, partner-api, webhooks, sftp-drop` and their connecting edges, not `analytics-ui`, `reporting-job`, `legacy-ftp` or `warehouse-to-ui`; downstream of `kafka-ingest` reaches `schema-validator, pii-scrubber, raw-lake, warehouse, analytics-ui, reporting-job`; `"both"` is the union; `"neighbours"` matches the old rule; a seeded edge id lights only that edge; a synthetic cycle `a→b→a` terminates and lights both; a self-loop is not followed. An id that is not an edge id is treated as a node seed; ids naming nothing are harmless because `Diagram` intersects with the layout.
 
 `test/browser/diagram.test.tsx`: `selected={["warehouse"]} highlight="upstream"` → `partner-api` card opacity 1 and `analytics-ui` dimmed; edge `partner-to-kafka` group opacity 1 with the main path's computed `stroke-width` 2.25px; `warehouse-to-ui` dimmed. The existing neighbours-mode dimming test is unchanged.
 
