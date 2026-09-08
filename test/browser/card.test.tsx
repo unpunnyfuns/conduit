@@ -51,8 +51,26 @@ describe("Card", () => {
   it("is a button when clickable and reports its id", async () => {
     const onClick = vi.fn();
     const screen = await render(<Card node={node} box={box} headerHeight={62} onClick={onClick} />);
-    await screen.getByRole("button", { name: /Kafka ingest/ }).click();
+    const group = screen.getByRole("group").element() as HTMLElement;
+    const button = screen.getByRole("button", { name: /Kafka ingest/ });
+    expect(group.contains(button.element())).toBe(true);
+    await button.click();
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not fire onClick when a control in the body slot is clicked", async () => {
+    const onClick = vi.fn();
+    const inner = vi.fn();
+    const screen = await render(
+      <Card node={node} box={box} headerHeight={62} onClick={onClick}>
+        <button type="button" data-testid="inner" onClick={inner}>
+          Inner
+        </button>
+      </Card>,
+    );
+    await screen.getByTestId("inner").click();
+    expect(inner).toHaveBeenCalledTimes(1);
+    expect(onClick).not.toHaveBeenCalled();
   });
 
   it("dims when asked", async () => {

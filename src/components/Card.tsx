@@ -49,12 +49,20 @@ export const Card = ({
     BORDER[node.status],
     dimmed && "opacity-45",
     selected && "ring-2 ring-lens-fg/40",
-    onClick !== undefined && "cursor-pointer",
   );
   const style = { left: box.x, top: box.y, width: box.width, height: box.height };
 
-  const content = (
-    <>
+  return (
+    <div role="group" aria-label={label} data-lens-node={id} className={className} style={style}>
+      {onClick !== undefined && (
+        <button
+          type="button"
+          aria-label={label}
+          onClick={onClick}
+          className="absolute inset-x-0 top-0 cursor-pointer rounded-[10px] bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-fg/40"
+          style={{ height: headerHeight }}
+        />
+      )}
       {node.badges.length > 0 && (
         <div className="absolute -top-2 right-[7px] flex gap-1.5">
           {node.badges.map((badge) => (
@@ -84,23 +92,6 @@ export const Card = ({
         </span>
       </div>
       {hasBody && <div className="min-h-0 flex-1 px-[14px] pb-[12px]">{children}</div>}
-    </>
-  );
-
-  return onClick === undefined ? (
-    <div role="group" aria-label={label} data-lens-node={id} className={className} style={style}>
-      {content}
     </div>
-  ) : (
-    <button
-      type="button"
-      aria-label={label}
-      data-lens-node={id}
-      className={className}
-      style={style}
-      onClick={onClick}
-    >
-      {content}
-    </button>
   );
 };
