@@ -112,6 +112,24 @@ describe("Diagram", () => {
     expect(parseFloat(getComputedStyle(untraced).strokeWidth)).toBeCloseTo(1.5, 1);
   });
 
+  it("keeps a muted edge muted on a traced path", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} selected={["legacy-ftp"]} highlight="upstream" />,
+    );
+    const muted = screen.container.querySelector(
+      "path[data-edge='batch-to-legacy']",
+    ) as SVGPathElement;
+    const mutedGroup = screen.container.querySelector(
+      "g[data-edge-group='batch-to-legacy']",
+    ) as Element;
+    const traced = screen.container.querySelector(
+      "path[data-edge='sftp-to-batch']",
+    ) as SVGPathElement;
+    expect(parseFloat(getComputedStyle(muted).strokeWidth)).toBeCloseTo(1.5, 1);
+    expect(Number(getComputedStyle(mutedGroup).opacity)).toBeLessThan(1);
+    expect(parseFloat(getComputedStyle(traced).strokeWidth)).toBeCloseTo(2.25, 1);
+  });
+
   it("keeps pulse count unchanged when a traced edge is emphasised", async () => {
     const screen = await render(
       <Diagram doc={ingress} selected={["warehouse"]} highlight="upstream" />,

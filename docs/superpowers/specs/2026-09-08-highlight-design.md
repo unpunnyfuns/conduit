@@ -45,7 +45,7 @@ New prop `highlight?: Highlight` (default `"neighbours"`). `lit` is computed as:
 
 ## EdgeLayer
 
-New prop `emphasisedIds?: ReadonlySet<string>` (default empty). `hero = edge.emphasis === "hero" || emphasisedIds.has(edge.id)` for stroke and glow only; the `Pulses` `hero` flag keeps reading `edge.emphasis`, so emphasis by selection never changes pulse count or timing.
+New prop `emphasisedIds?: ReadonlySet<string>` (default empty). `hero = edge.emphasis === "hero" || emphasisedIds.has(edge.id)` for stroke and glow only; the `Pulses` `hero` flag keeps reading `edge.emphasis`, so emphasis by selection never changes pulse count or timing. An edge the document marks `muted` is never emphasised by selection; the author's de-emphasis wins.
 
 ## Example
 

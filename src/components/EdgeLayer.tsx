@@ -109,7 +109,10 @@ export type EdgeLayerProps = {
   height: number;
   edges: readonly PlacedEdge[];
   dimmedIds: ReadonlySet<string>;
-  /** Edges drawn at hero weight without changing their pulses, e.g. a traced path. */
+  /**
+   * Edges drawn at hero weight without changing their pulses, e.g. a traced path.
+   * An edge the document marks `muted` stays muted.
+   */
   emphasisedIds?: ReadonlySet<string>;
   onEdgeClick?: (id: string) => void;
 };
@@ -157,7 +160,7 @@ export const EdgeLayer = ({
 
       {edges.map(({ edge, path, tone }) => {
         const heroPulses = edge.emphasis === "hero";
-        const hero = heroPulses || emphasisedIds.has(edge.id);
+        const hero = heroPulses || (emphasisedIds.has(edge.id) && edge.emphasis !== "muted");
         const dimmed = dimmedIds.has(edge.id) || edge.emphasis === "muted";
         return (
           <g
