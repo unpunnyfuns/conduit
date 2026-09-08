@@ -1,7 +1,12 @@
 import { useId } from "react";
 import type { Status } from "../schema/primitives.js";
 import { cn } from "../cn.js";
-import { HERO_PULSE_COUNT, HERO_PULSE_DURATION, PULSE_DURATION } from "../layout/design.js";
+import {
+  HERO_PULSE_COUNT,
+  HERO_PULSE_DURATION,
+  PILL_TEXT_SIZE,
+  PULSE_DURATION,
+} from "../layout/design.js";
 import { coord } from "../layout/geometry.js";
 import type { PlacedEdge } from "../layout/layout.js";
 import { STATUSES } from "../schema/primitives.js";
@@ -86,7 +91,8 @@ const Pill = ({
       rx={box.height / 2}
     />
     <text
-      className={cn("text-[9.5px] font-semibold", PILL_TEXT[tone])}
+      className={cn("font-semibold", PILL_TEXT[tone])}
+      style={{ fontSize: PILL_TEXT_SIZE }}
       x={box.x + box.width / 2}
       y={box.y + box.height / 2 + 3.5}
       textAnchor="middle"

@@ -1,5 +1,6 @@
 import type { Status } from "../schema/primitives.js";
 import { cn } from "../cn.js";
+import { BADGE_HEIGHT } from "../layout/design.js";
 
 const TONE: Record<Status, string> = {
   neutral: "bg-lens-chip border-lens-card-border text-lens-muted",
@@ -11,9 +12,10 @@ const TONE: Record<Status, string> = {
 export const Badge = ({ label, tone }: { label: string; tone: Status }) => (
   <span
     className={cn(
-      "inline-flex h-4 items-center rounded-full border px-[9px] text-[8.5px] font-bold uppercase leading-none tracking-[0.06em] whitespace-nowrap",
+      "inline-flex items-center rounded-full border px-[9px] text-[8.5px] font-bold uppercase leading-none tracking-[0.06em] whitespace-nowrap",
       TONE[tone],
     )}
+    style={{ height: BADGE_HEIGHT }}
   >
     {label}
   </span>
