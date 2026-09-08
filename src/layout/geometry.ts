@@ -21,3 +21,11 @@ export const boxCentre = (box: Box): Point => ({
   x: box.x + box.width / 2,
   y: box.y + box.height / 2,
 });
+
+/** The same box with its axes swapped: what a frame box is on screen when the flow runs the other way. */
+export const transposeBox = (box: Box): Box => ({
+  x: box.y,
+  y: box.x,
+  width: box.height,
+  height: box.width,
+});

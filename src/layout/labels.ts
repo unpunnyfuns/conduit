@@ -168,17 +168,23 @@ const settle = (curve: Curve, anchor: Point, size: Size, settled: readonly Box[]
  * A pill box for every labelled route, none intersecting any other. Routes
  * settle in document order, and a pill whose anchor is already clear stays
  * exactly where the router put it, so an uncrowded diagram is untouched.
+ *
+ * When `swapped`, the frame will be transposed afterwards, so the pill is
+ * sized tall-and-narrow here to come out text-shaped on screen.
  */
-export const placeLabelPills = (routed: readonly RoutedEdge[]): Map<string, Box> => {
+export const placeLabelPills = (
+  routed: readonly RoutedEdge[],
+  swapped: boolean,
+): Map<string, Box> => {
   const settled: Box[] = [];
   const boxes = new Map<string, Box>();
 
   for (const { edge, curve, labelAnchor } of routed) {
     if (edge.label === undefined || labelAnchor === undefined) continue;
-    const size = {
-      width: measure(edge.label, "sans-bold", PILL_TEXT_SIZE) + PILL_PADDING_X * 2,
-      height: PILL_HEIGHT,
-    };
+    const text = measure(edge.label, "sans-bold", PILL_TEXT_SIZE) + PILL_PADDING_X * 2;
+    const size = swapped
+      ? { width: PILL_HEIGHT, height: text }
+      : { width: text, height: PILL_HEIGHT };
     const box = settle(curve, labelAnchor, size, settled);
     settled.push(box);
     boxes.set(edge.id, box);

@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { ingress } from "../../example/data/ingress.js";
 import { layout } from "../../src/layout.js";
+import {
+  CARD_GAP_X,
+  DEFAULT_CARD_HEIGHTS,
+  LANE_BOTTOM_PADDING,
+  LANE_CONTENT_WIDTH,
+  LANE_HEADER_STRIP,
+} from "../../src/layout/design.js";
+import { cardHeight } from "../../src/layout/architecture.js";
+import { frameFor } from "../../src/layout/frame.js";
+import { parseDocument } from "../../src/index.js";
 
 /**
  * Literal geometry captured from main before the frame refactor. If any of
@@ -41,5 +51,123 @@ describe("direction right is today's layout", () => {
     const rest = { ...ingress };
     delete (rest as { direction?: string }).direction;
     expect(JSON.stringify(layout({ ...rest, direction: "right" }))).toBe(JSON.stringify(laid));
+  });
+});
+
+const down = { ...ingress, direction: "down" as const };
+
+describe("direction down", () => {
+  const laid = layout(down);
+  const laneBox = (id: string) => laid.atlas.lanes[id]!;
+  const nodeBox = (id: string) => laid.atlas.nodes[id]!;
+
+  it("reports its direction", () => {
+    expect(laid.direction).toBe("down");
+    expect(layout(ingress).direction).toBe("right");
+  });
+
+  it("stacks bands top to bottom in lane order, all the same height", () => {
+    const ordered = ["sources", "ingest", "validate", "store", "consume"].map(laneBox);
+    for (let i = 1; i < ordered.length; i += 1)
+      expect(ordered[i]!.y).toBeGreaterThan(ordered[i - 1]!.y + ordered[i - 1]!.height - 1);
+    expect(new Set(ordered.map((box) => box.height)).size).toBe(1);
+    expect(new Set(ordered.map((box) => box.x)).size).toBe(1);
+  });
+
+  it("sizes a band from the tallest row plus header and bottom padding", () => {
+    const frame = frameFor(
+      "down",
+      { lanes: down.lanes, nodes: down.nodes, edges: down.edges },
+      DEFAULT_CARD_HEIGHTS,
+    );
+    expect(laneBox("sources").height).toBe(
+      LANE_HEADER_STRIP + frame.laneCross + LANE_BOTTOM_PADDING,
+    );
+  });
+
+  it("keeps every card 372 wide and its declared height tall", () => {
+    for (const node of down.nodes) {
+      expect(nodeBox(node.id).width, node.id).toBe(LANE_CONTENT_WIDTH);
+      expect(nodeBox(node.id).height, node.id).toBe(cardHeight(node, DEFAULT_CARD_HEIGHTS));
+    }
+  });
+
+  it("runs rows left to right inside a band", () => {
+    expect(nodeBox("partner-api").x).toBeLessThan(nodeBox("sftp-drop").x);
+    expect(nodeBox("sftp-drop").x).toBeLessThan(nodeBox("webhooks").x);
+    expect(nodeBox("partner-api").y).toBe(nodeBox("sftp-drop").y);
+  });
+
+  it("keeps cards inside their band, below the header strip", () => {
+    for (const { node, box } of laid.nodes) {
+      const band = laneBox(node.lane);
+      expect(box.y, node.id).toBeGreaterThanOrEqual(band.y + LANE_HEADER_STRIP);
+      expect(box.y + box.height, node.id).toBeLessThanOrEqual(
+        band.y + band.height - LANE_BOTTOM_PADDING,
+      );
+      expect(box.x, node.id).toBeGreaterThanOrEqual(band.x);
+      expect(box.x + box.width, node.id).toBeLessThanOrEqual(band.x + band.width);
+    }
+  });
+
+  it("stacks a pair vertically with the card gap between", () => {
+    const doc = parseDocument({
+      version: 1,
+      title: "P",
+      direction: "down",
+      lanes: [{ id: "a", label: "A" }],
+      nodes: [
+        { id: "p", label: "P", kind: "service", lane: "a", row: 0 },
+        { id: "q", label: "Q", kind: "service", lane: "a", row: 0, size: "chart" },
+      ],
+    });
+    const pair = layout(doc);
+    const p = pair.atlas.nodes["p"]!;
+    const q = pair.atlas.nodes["q"]!;
+    expect(p.x).toBe(q.x);
+    expect(q.y).toBe(p.y + p.height + CARD_GAP_X);
+  });
+
+  it("keeps everything inside the canvas", () => {
+    const inside = (box: { x: number; y: number; width: number; height: number }) =>
+      box.x >= 0 &&
+      box.y >= 0 &&
+      box.x + box.width <= laid.width &&
+      box.y + box.height <= laid.height;
+    for (const { box } of laid.nodes) expect(inside(box)).toBe(true);
+    for (const { box } of laid.lanes) expect(inside(box)).toBe(true);
+    for (const box of Object.values(laid.atlas.edges)) expect(inside(box)).toBe(true);
+  });
+
+  it("gives every labelled edge a text-shaped pill and no two intersect", () => {
+    const pills = laid.edges.flatMap(({ label }) => (label === undefined ? [] : [label.box]));
+    expect(pills.length).toBe(down.edges.filter((edge) => edge.label !== undefined).length);
+    for (const pill of pills) expect(pill.width).toBeGreaterThan(pill.height);
+    pills.forEach((a, i) => {
+      for (const b of pills.slice(i + 1)) {
+        const apart =
+          a.x + a.width <= b.x ||
+          b.x + b.width <= a.x ||
+          a.y + a.height <= b.y ||
+          b.y + b.height <= a.y;
+        expect(apart).toBe(true);
+      }
+    });
+  });
+
+  it("is byte-identical across calls and JSON round trips", () => {
+    expect(JSON.stringify(layout(parseDocument(JSON.parse(JSON.stringify(down)))))).toBe(
+      JSON.stringify(laid),
+    );
+  });
+
+  it("does not move when a label is renamed", () => {
+    const renamed = {
+      ...down,
+      nodes: down.nodes.map((node) =>
+        node.id === "warehouse" ? { ...node, label: "W".repeat(120) } : node,
+      ),
+    };
+    expect(layout(renamed).atlas).toEqual(laid.atlas);
   });
 });

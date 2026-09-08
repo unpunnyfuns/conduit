@@ -10,3 +10,4 @@ export { DEFAULT_CARD_HEIGHTS, type CardHeights } from "./layout/design.js";
 export type { Box, Point } from "./layout/geometry.js";
 export { ConduitLayoutError, type LayoutErrorCode } from "./layout/errors.js";
 export { findView, flattenViews } from "./layout/scope.js";
+export type { Direction } from "./schema/primitives.js";

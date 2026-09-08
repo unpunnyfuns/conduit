@@ -101,6 +101,29 @@ export const shiftCurve = (curve: Curve, dx: number, dy: number): Curve => {
   };
 };
 
+/** The same curve with x and y swapped on every point. */
+export const transposeCurve = (curve: Curve): Curve => {
+  const flip = (point: Point): Point => ({ x: point.y, y: point.x });
+  return {
+    from: flip(curve.from),
+    segments: curve.segments.map((segment) => {
+      switch (segment.kind) {
+        case "line":
+          return { kind: "line", to: flip(segment.to) };
+        case "cubic":
+          return {
+            kind: "cubic",
+            first: flip(segment.first),
+            second: flip(segment.second),
+            to: flip(segment.to),
+          };
+        default:
+          return assertNever(segment, "Unhandled path segment");
+      }
+    }),
+  };
+};
+
 /**
  * A box the route cannot leave. A cubic stays inside the hull of its own
  * control points, so taking every point of every segment is a bound rather

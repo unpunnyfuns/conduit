@@ -1,5 +1,5 @@
 import type { Edge, ConduitDocument, View, ViewScope } from "../schema/document.js";
-import type { Status } from "../schema/primitives.js";
+import type { Direction, Status } from "../schema/primitives.js";
 import type { PlacedLane, PlacedNode } from "./architecture.js";
 import { canvasFor, union, type Canvas } from "./bounds.js";
 import { relieveCongestion } from "./congestion.js";
@@ -10,10 +10,10 @@ import {
   DIAGRAM_MARGIN,
   type CardHeights,
 } from "./design.js";
-import { curveBounds, pathOf, shiftCurve } from "./edges.js";
+import { curveBounds, pathOf, shiftCurve, transposeCurve, type Curve } from "./edges.js";
 import { ConduitLayoutError } from "./errors.js";
 import { frameFor } from "./frame.js";
-import { roundCoord, type Box } from "./geometry.js";
+import { roundCoord, transposeBox, type Box } from "./geometry.js";
 import { placeLabelPills } from "./labels.js";
 import { findView, resolveScope } from "./scope.js";
 
@@ -40,6 +40,7 @@ export type Atlas = {
 export type Layout = {
   width: number;
   height: number;
+  direction: Direction;
   lanes: PlacedLane[];
   nodes: PlacedNode[];
   edges: PlacedEdge[];
@@ -87,30 +88,41 @@ export const layout = (doc: ConduitDocument, options: LayoutOptions = {}): Layou
 
   const frame = frameFor(doc.direction, graph, heights);
   const { layout: placed, routed } = relieveCongestion(graph, frame);
-  const pills = placeLabelPills(routed);
+
+  const swapped = frame.direction === "down";
+  const pills = placeLabelPills(routed, swapped);
+
+  const orient = (box: Box): Box => (swapped ? transposeBox(box) : box);
+  const orientCurve = (curve: Curve): Curve => (swapped ? transposeCurve(curve) : curve);
+
+  const lanesInFrame = placed.lanes.map((lane) => ({ ...lane, box: orient(lane.box) }));
+  const nodesInFrame = placed.nodes.map((node) => ({ ...node, box: orient(node.box) }));
+  const curves = new Map(routed.map(({ edge, curve }) => [edge.id, orientCurve(curve)]));
+  const pillBoxes = new Map([...pills].map(([id, box]) => [id, orient(box)]));
+  const extent = swapped ? { width: placed.height, height: placed.width } : placed;
 
   const drawn: Box[] = [
-    ...placed.lanes.map(({ box }) => box),
-    ...placed.nodes.flatMap((node) => {
+    ...lanesInFrame.map(({ box }) => box),
+    ...nodesInFrame.flatMap((node) => {
       const strip = badgeStrip(node);
       return strip === undefined ? [node.box] : [node.box, strip];
     }),
-    ...pills.values(),
-    ...routed.map(({ curve }) => curveBounds(curve)),
+    ...pillBoxes.values(),
+    ...[...curves.values()].map(curveBounds),
   ];
-  const canvas = canvasFor(placed, union(drawn), DIAGRAM_MARGIN);
+  const canvas = canvasFor(extent, union(drawn), DIAGRAM_MARGIN);
 
-  const lanes = placed.lanes.map((lane) => ({ ...lane, box: shiftBox(lane.box, canvas) }));
-  const nodes = placed.nodes.map((node) => ({ ...node, box: shiftBox(node.box, canvas) }));
+  const lanes = lanesInFrame.map((lane) => ({ ...lane, box: shiftBox(lane.box, canvas) }));
+  const nodes = nodesInFrame.map((node) => ({ ...node, box: shiftBox(node.box, canvas) }));
 
   const edgeBoxes: Record<string, Box> = {};
-  const edges: PlacedEdge[] = routed.map(({ edge, curve }) => {
-    const shifted = shiftCurve(curve, canvas.shiftX, canvas.shiftY);
+  const edges: PlacedEdge[] = routed.map(({ edge }) => {
+    const curve = curves.get(edge.id) ?? { from: { x: 0, y: 0 }, segments: [] };
     edgeBoxes[edge.id] = shiftBox(curveBounds(curve), canvas);
-    const pill = pills.get(edge.id);
+    const pill = pillBoxes.get(edge.id);
     return {
       edge,
-      path: pathOf(shifted),
+      path: pathOf(shiftCurve(curve, canvas.shiftX, canvas.shiftY)),
       tone: edge.status,
       ...(pill === undefined || edge.label === undefined
         ? {}
@@ -121,6 +133,7 @@ export const layout = (doc: ConduitDocument, options: LayoutOptions = {}): Layou
   return {
     width: canvas.width,
     height: canvas.height,
+    direction: doc.direction,
     lanes,
     nodes,
     edges,
