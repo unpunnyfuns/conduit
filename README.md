@@ -138,14 +138,21 @@ user-supplied.
 ### Layout without React
 
 ```ts
-import { layout, traceFrom } from "@unpunnyfuns/conduit/layout";
+import { layout } from "@unpunnyfuns/conduit/layout";
 
 const { width, height, nodes, edges, atlas } = layout(doc, { view: "storage" });
-
-const { nodes, edges } = traceFrom(doc.edges, ["warehouse"], "upstream");
 ```
 
 Same document, same geometry, every time.
+
+To trace from a selection:
+
+```ts
+import { traceFrom } from "@unpunnyfuns/conduit/layout";
+
+const traced = traceFrom(doc.edges, ["warehouse"], "upstream");
+const litNodeIds = [...traced.nodes];
+```
 
 ## Development
 
