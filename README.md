@@ -133,10 +133,13 @@ Same document, same geometry, every time.
 ## Development
 
 ```bash
-npm test            # engine tests in Node, component tests in Chromium
-npm run example     # Vite playground
+npm test
+npm run example
 npm run build
 ```
+
+`npm test` runs the engine tests in Node and the component tests in
+Chromium; `npm run example` starts the Vite playground.
 
 Developing requires Node ≥ 22.12 (Vitest 5); the published package runs on Node ≥ 20.11.
 
