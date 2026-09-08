@@ -2,7 +2,18 @@
   "name": "@unpunnyfuns/lens",
   "version": "0.1.0",
   "description": "Lane-based architecture diagrams for React, with live content in every card.",
+  "keywords": [
+    "architecture",
+    "diagram",
+    "react",
+    "svg",
+    "tailwind"
+  ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unpunnyfuns/lens.git"
+  },
   "files": [
     "dist",
     "README.md",
@@ -24,7 +35,11 @@
     "./theme.css": "./dist/theme.css",
     "./package.json": "./package.json"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
+    "prepack": "npm run build",
     "build": "rm -rf dist && tsc -p tsconfig.build.json && cp src/theme.css dist/theme.css",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "oxlint",
