@@ -3,13 +3,15 @@ import { assertNever } from "../assert.js";
 
 export type Highlight = "neighbours" | "upstream" | "downstream" | "both";
 
-export type Trace = { nodes: Set<string>; edges: Set<string> };
+export type Trace = { nodes: ReadonlySet<string>; edges: ReadonlySet<string> };
+
+type Building = { nodes: Set<string>; edges: Set<string> };
 
 const walk = (
   edges: readonly Edge[],
   seeds: ReadonlySet<string>,
   forward: boolean,
-  into: Trace,
+  into: Building,
 ): void => {
   const queue = [...seeds];
   const visited = new Set(seeds);
@@ -37,7 +39,7 @@ export const traceFrom = (
 ): Trace => {
   const edgeIds = new Set(edges.map((edge) => edge.id));
   const seedNodes = new Set(seeds.filter((id) => !edgeIds.has(id)));
-  const trace: Trace = {
+  const trace: Building = {
     nodes: new Set(seedNodes),
     edges: new Set(seeds.filter((id) => edgeIds.has(id))),
   };

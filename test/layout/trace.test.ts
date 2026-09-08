@@ -3,7 +3,7 @@ import { ingress } from "../../example/data/ingress.js";
 import type { Edge } from "../../src/index.js";
 import { traceFrom } from "../../src/layout/trace.js";
 
-const sorted = (set: Set<string>) => [...set].sort();
+const sorted = (set: ReadonlySet<string>) => [...set].sort();
 
 const edge = (id: string, from: string, to: string): Edge => ({
   id,
@@ -71,6 +71,21 @@ describe("traceFrom on the ingress document", () => {
     const down = traceFrom(ingress.edges, ["schema-validator"], "downstream");
     expect(sorted(both.nodes)).toEqual(sorted(new Set([...up.nodes, ...down.nodes])));
     expect(sorted(both.edges)).toEqual(sorted(new Set([...up.edges, ...down.edges])));
+    expect(sorted(both.nodes)).toEqual(
+      [
+        "analytics-ui",
+        "batch-loader",
+        "kafka-ingest",
+        "partner-api",
+        "pii-scrubber",
+        "raw-lake",
+        "reporting-job",
+        "schema-validator",
+        "sftp-drop",
+        "warehouse",
+        "webhooks",
+      ].sort(),
+    );
   });
 
   it("neighbours lights the seed and its touching edges only", () => {
@@ -89,7 +104,7 @@ describe("traceFrom on the ingress document", () => {
     }
   });
 
-  it("ignores unknown ids", () => {
+  it("keeps an unknown id as a node seed", () => {
     const trace = traceFrom(ingress.edges, ["nope"], "upstream");
     expect(trace.nodes.size).toBe(1);
     expect(trace.nodes.has("nope")).toBe(true);
