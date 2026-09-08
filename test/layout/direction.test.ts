@@ -10,6 +10,7 @@ import {
 } from "../../src/layout/design.js";
 import { cardHeight } from "../../src/layout/architecture.js";
 import { frameFor } from "../../src/layout/frame.js";
+import { findView, resolveScope } from "../../src/layout/scope.js";
 import { parseDocument } from "../../src/index.js";
 
 /**
@@ -26,6 +27,7 @@ const CAPTURED = {
   lane: { store: { x: 1288, y: 44, width: 404, height: 504 } },
   size: { width: 2132, height: 564 },
   path: "M1490,232 L1490,284",
+  pill: { x: 1475, y: 250.5, width: 30, height: 15 },
 };
 
 describe("direction right is today's layout", () => {
@@ -44,6 +46,12 @@ describe("direction right is today's layout", () => {
   it("routes the captured edge exactly", () => {
     expect(laid.edges.find(({ edge }) => edge.id === "lake-to-warehouse")?.path).toBe(
       CAPTURED.path,
+    );
+  });
+
+  it("places the captured pill exactly", () => {
+    expect(laid.edges.find(({ edge }) => edge.id === "lake-to-warehouse")?.label?.box).toEqual(
+      CAPTURED.pill,
     );
   });
 
@@ -82,6 +90,15 @@ describe("direction down", () => {
     );
     expect(laneBox("sources").height).toBe(
       LANE_HEADER_STRIP + frame.laneCross + LANE_BOTTOM_PADDING,
+    );
+  });
+
+  it("a view scope sizes bands from the scoped graph", () => {
+    const scopedGraph = resolveScope(down, findView(down.views, "storage")!.scope);
+    const scopedFrame = frameFor("down", scopedGraph, DEFAULT_CARD_HEIGHTS);
+    const scopedLaid = layout(down, { view: "storage" });
+    expect(scopedLaid.atlas.lanes["store"]!.height).toBe(
+      LANE_HEADER_STRIP + scopedFrame.laneCross + LANE_BOTTOM_PADDING,
     );
   });
 

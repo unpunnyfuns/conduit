@@ -95,15 +95,15 @@ export const layout = (doc: ConduitDocument, options: LayoutOptions = {}): Layou
   const orient = (box: Box): Box => (swapped ? transposeBox(box) : box);
   const orientCurve = (curve: Curve): Curve => (swapped ? transposeCurve(curve) : curve);
 
-  const lanesInFrame = placed.lanes.map((lane) => ({ ...lane, box: orient(lane.box) }));
-  const nodesInFrame = placed.nodes.map((node) => ({ ...node, box: orient(node.box) }));
+  const lanesOnScreen = placed.lanes.map((lane) => ({ ...lane, box: orient(lane.box) }));
+  const nodesOnScreen = placed.nodes.map((node) => ({ ...node, box: orient(node.box) }));
   const curves = new Map(routed.map(({ edge, curve }) => [edge.id, orientCurve(curve)]));
   const pillBoxes = new Map([...pills].map(([id, box]) => [id, orient(box)]));
   const extent = swapped ? { width: placed.height, height: placed.width } : placed;
 
   const drawn: Box[] = [
-    ...lanesInFrame.map(({ box }) => box),
-    ...nodesInFrame.flatMap((node) => {
+    ...lanesOnScreen.map(({ box }) => box),
+    ...nodesOnScreen.flatMap((node) => {
       const strip = badgeStrip(node);
       return strip === undefined ? [node.box] : [node.box, strip];
     }),
@@ -112,8 +112,8 @@ export const layout = (doc: ConduitDocument, options: LayoutOptions = {}): Layou
   ];
   const canvas = canvasFor(extent, union(drawn), DIAGRAM_MARGIN);
 
-  const lanes = lanesInFrame.map((lane) => ({ ...lane, box: shiftBox(lane.box, canvas) }));
-  const nodes = nodesInFrame.map((node) => ({ ...node, box: shiftBox(node.box, canvas) }));
+  const lanes = lanesOnScreen.map((lane) => ({ ...lane, box: shiftBox(lane.box, canvas) }));
+  const nodes = nodesOnScreen.map((node) => ({ ...node, box: shiftBox(node.box, canvas) }));
 
   const edgeBoxes: Record<string, Box> = {};
   const edges: PlacedEdge[] = routed.map(({ edge }) => {
