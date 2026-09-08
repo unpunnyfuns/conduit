@@ -41,4 +41,30 @@ describe("example app", () => {
       .toBeLessThan(1);
     expect(opacity("[data-conduit-node='partner-api']")).toBe(1);
   });
+
+  it("switches highlight mode with a card selected", async () => {
+    const screen = await render(<App />);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    const opacity = (selector: string) =>
+      Number(getComputedStyle(screen.container.querySelector(selector) as Element).opacity);
+    await expect
+      .poll(() => opacity("[data-conduit-node='analytics-ui']"), { timeout: 2000 })
+      .toBeLessThan(1);
+
+    await screen.getByRole("combobox", { name: "Highlight" }).selectOptions("downstream");
+    await expect
+      .poll(() => opacity("[data-conduit-node='analytics-ui']"), { timeout: 2000 })
+      .toBe(1);
+    await expect
+      .poll(() => opacity("[data-conduit-node='partner-api']"), { timeout: 2000 })
+      .toBeLessThan(1);
+
+    await screen.getByRole("combobox", { name: "Highlight" }).selectOptions("both");
+    await expect
+      .poll(() => opacity("[data-conduit-node='analytics-ui']"), { timeout: 2000 })
+      .toBe(1);
+    await expect
+      .poll(() => opacity("[data-conduit-node='partner-api']"), { timeout: 2000 })
+      .toBe(1);
+  });
 });
