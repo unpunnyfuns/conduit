@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { LensDocument, LensNode } from "../schema/document.js";
 import { cn } from "../cn.js";
 import { DEFAULT_CARD_HEIGHTS, type CardHeights } from "../layout/design.js";
@@ -16,7 +16,10 @@ export type DiagramProps = {
   onNodeClick?: (id: string) => void;
   onEdgeClick?: (id: string) => void;
   cardHeights?: Partial<CardHeights>;
+  /** Applied to the scroll viewport; size it with `h-[…]` / `max-h-[…]` etc. */
   className?: string;
+  /** Scales the canvas down to the viewport's width. Never scales up. */
+  fit?: boolean;
   /** Fills the body slot of every card that has one. */
   children?: (node: LensNode) => ReactNode;
 };
@@ -28,6 +31,11 @@ const headerHeightOf = (node: LensNode, heights: CardHeights): number =>
  * The diagram: lanes underneath, one svg of edges, cards on top. Layout is
  * pure and memoised on its inputs, so a chart re-rendering inside a card
  * never triggers a relayout.
+ *
+ * The root (`role="figure"`) is a scroll viewport; the fixed-size drawing
+ * itself is `[data-lens-canvas]` inside it, scaled down to the viewport's
+ * width when `fit` is set. Atlas coordinates from `layout()` are relative to
+ * the canvas, not the viewport.
  */
 export const Diagram = ({
   doc,
@@ -37,13 +45,44 @@ export const Diagram = ({
   onEdgeClick,
   cardHeights,
   className,
+  fit = false,
   children,
 }: DiagramProps) => {
+  // Deps are the scalars, not `cardHeights` itself: a caller passing a fresh
+  // object literal every render must not defeat the memo below it.
+  const compactHeight = cardHeights?.compact;
+  const withSubtitleHeight = cardHeights?.withSubtitle;
+  const chartHeight = cardHeights?.chart;
   const heights = useMemo<CardHeights>(
-    () => ({ ...DEFAULT_CARD_HEIGHTS, ...cardHeights }),
-    [cardHeights],
+    () => ({
+      compact: compactHeight ?? DEFAULT_CARD_HEIGHTS.compact,
+      withSubtitle: withSubtitleHeight ?? DEFAULT_CARD_HEIGHTS.withSubtitle,
+      chart: chartHeight ?? DEFAULT_CARD_HEIGHTS.chart,
+    }),
+    [compactHeight, withSubtitleHeight, chartHeight],
   );
-  const laid = useMemo(() => layout(doc, { view, cardHeights: heights }), [doc, view, heights]);
+
+  const { laid, nodeLabel } = useMemo(() => {
+    const drawn = layout(doc, { view, cardHeights: heights });
+    const labels = new Map(drawn.nodes.map(({ node }) => [node.id, node.label]));
+    return { laid: drawn, nodeLabel: labels };
+  }, [doc, view, heights]);
+
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [viewportWidth, setViewportWidth] = useState(0);
+
+  useEffect(() => {
+    if (!fit) return;
+    const node = viewportRef.current;
+    if (node === null || typeof ResizeObserver === "undefined") return;
+    const update = () => setViewportWidth(node.clientWidth);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fit]);
+
+  const scale = fit && viewportWidth > 0 ? Math.min(1, viewportWidth / laid.width) : 1;
 
   const lit = useMemo(() => {
     if (selected === undefined || selected.length === 0) return undefined;
@@ -56,13 +95,11 @@ export const Diagram = ({
         .filter(({ edge }) => ids.has(edge.id) || nodes.has(edge.from) || nodes.has(edge.to))
         .map(({ edge }) => edge.id),
     );
+    const lanesWithLitNode = new Set<string>();
+    for (const { node } of laid.nodes) if (nodes.has(node.id)) lanesWithLitNode.add(node.lane);
     const lanes = new Set(
       laid.lanes
-        .filter(
-          ({ lane }) =>
-            ids.has(lane.id) ||
-            laid.nodes.some(({ node }) => node.lane === lane.id && nodes.has(node.id)),
-        )
+        .filter(({ lane }) => ids.has(lane.id) || lanesWithLitNode.has(lane.id))
         .map(({ lane }) => lane.id),
     );
     return { nodes, edges, lanes };
@@ -78,58 +115,83 @@ export const Diagram = ({
     [lit, laid],
   );
 
-  const nodeLabel = new Map(laid.nodes.map(({ node }) => [node.id, node.label]));
-
   return (
     <div
       role="figure"
       aria-label={doc.title}
-      className={cn(
-        "relative overflow-hidden rounded-xl bg-lens-bg bg-[radial-gradient(var(--color-lens-dot)_1px,transparent_1px)] bg-[size:18px_18px] text-lens-fg",
-        className,
-      )}
-      style={{ width: laid.width, height: laid.height }}
+      ref={viewportRef}
+      className={cn("relative max-w-full overflow-auto", className)}
     >
-      {laid.lanes.map(({ lane, box }) => (
-        <LaneBand
-          key={lane.id}
-          id={lane.id}
-          lane={lane}
-          box={box}
-          dimmed={lit !== undefined && !lit.lanes.has(lane.id)}
-        />
-      ))}
-
-      <EdgeLayer
-        width={laid.width}
-        height={laid.height}
-        edges={laid.edges}
-        dimmedIds={dimmedEdges}
-        onEdgeClick={onEdgeClick}
-      />
-
-      {laid.nodes.map(({ node, box }) => (
-        <Card
-          key={node.id}
-          id={node.id}
-          node={node}
-          box={box}
-          headerHeight={headerHeightOf(node, heights)}
-          dimmed={lit !== undefined && !lit.nodes.has(node.id)}
-          selected={selected?.includes(node.id) ?? false}
-          onClick={onNodeClick === undefined ? undefined : () => onNodeClick(node.id)}
-        >
-          {children?.(node)}
-        </Card>
-      ))}
-
-      <ul className="sr-only">
-        {laid.edges.map(({ edge }) => (
-          <li
-            key={edge.id}
-          >{`${nodeLabel.get(edge.from) ?? edge.from} → ${nodeLabel.get(edge.to) ?? edge.to}, ${edge.kind}`}</li>
+      <div
+        data-lens-canvas
+        className="relative rounded-xl bg-lens-bg bg-[radial-gradient(var(--color-lens-dot)_1px,transparent_1px)] bg-[size:18px_18px] text-lens-fg"
+        style={{
+          width: laid.width,
+          height: laid.height,
+          ...(scale < 1
+            ? {
+                transform: `scale(${scale})`,
+                transformOrigin: "top left",
+                marginRight: -(laid.width * (1 - scale)),
+                marginBottom: -(laid.height * (1 - scale)),
+              }
+            : {}),
+        }}
+      >
+        {laid.lanes.map(({ lane, box }) => (
+          <LaneBand
+            key={lane.id}
+            id={lane.id}
+            lane={lane}
+            box={box}
+            dimmed={lit !== undefined && !lit.lanes.has(lane.id)}
+          />
         ))}
-      </ul>
+
+        <EdgeLayer
+          width={laid.width}
+          height={laid.height}
+          edges={laid.edges}
+          dimmedIds={dimmedEdges}
+          onEdgeClick={onEdgeClick}
+        />
+
+        {laid.nodes.map(({ node, box }) => {
+          const headerHeight = headerHeightOf(node, heights);
+          const hasBody = box.height > headerHeight;
+          return (
+            <Card
+              key={node.id}
+              id={node.id}
+              node={node}
+              box={box}
+              headerHeight={headerHeight}
+              dimmed={lit !== undefined && !lit.nodes.has(node.id)}
+              selected={selected?.includes(node.id) ?? false}
+              onClick={onNodeClick === undefined ? undefined : () => onNodeClick(node.id)}
+            >
+              {hasBody ? children?.(node) : null}
+            </Card>
+          );
+        })}
+
+        <ul className="sr-only">
+          {laid.edges.map(({ edge }) => {
+            const text = `${nodeLabel.get(edge.from) ?? edge.from} → ${nodeLabel.get(edge.to) ?? edge.to}, ${edge.kind}`;
+            return (
+              <li key={edge.id}>
+                {onEdgeClick === undefined ? (
+                  text
+                ) : (
+                  <button type="button" onClick={() => onEdgeClick(edge.id)}>
+                    {text}
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 };

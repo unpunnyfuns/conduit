@@ -13,7 +13,7 @@ describe("example app", () => {
 
   it("selects a node on click and logs it", async () => {
     const screen = await render(<App />);
-    await screen.getByRole("button", { name: /^Warehouse/ }).click();
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
     await expect.element(screen.getByText("node warehouse")).toBeInTheDocument();
     await expect.element(screen.getByRole("button", { name: "Clear selection" })).toBeVisible();
   });

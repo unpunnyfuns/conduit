@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { ingress } from "../../example/data/ingress.js";
 import { Diagram } from "../../src/index.js";
@@ -15,8 +16,8 @@ describe("Diagram", () => {
   it("positions cards exactly where the atlas says", async () => {
     const screen = await render(<Diagram doc={ingress} />);
     const laid = layout(ingress);
-    const root = screen.container.querySelector("[role='figure']") as HTMLElement;
-    const origin = root.getBoundingClientRect();
+    const canvas = screen.container.querySelector("[data-lens-canvas]") as HTMLElement;
+    const origin = canvas.getBoundingClientRect();
     for (const [id, box] of Object.entries(laid.atlas.nodes)) {
       const card = screen.container.querySelector(`[data-lens-node='${id}']`) as HTMLElement;
       const rect = card.getBoundingClientRect();
@@ -30,9 +31,33 @@ describe("Diagram", () => {
   it("sizes itself to the layout", async () => {
     const screen = await render(<Diagram doc={ingress} />);
     const laid = layout(ingress);
-    const root = screen.container.querySelector("[role='figure']") as HTMLElement;
-    expect(root.getBoundingClientRect().width).toBeCloseTo(laid.width, 0);
-    expect(root.getBoundingClientRect().height).toBeCloseTo(laid.height, 0);
+    const canvas = screen.container.querySelector("[data-lens-canvas]") as HTMLElement;
+    expect(canvas.getBoundingClientRect().width).toBeCloseTo(laid.width, 0);
+    expect(canvas.getBoundingClientRect().height).toBeCloseTo(laid.height, 0);
+  });
+
+  it("scrolls when constrained", async () => {
+    const screen = await render(<Diagram doc={ingress} className="h-[200px] w-[400px]" />);
+    const figure = screen.container.querySelector("[role='figure']") as HTMLElement;
+    expect(figure.scrollWidth).toBeGreaterThan(figure.clientWidth);
+    expect(figure.scrollHeight).toBeGreaterThan(figure.clientHeight);
+  });
+
+  it("fit scales down to the viewport width", async () => {
+    await page.viewport(800, 600);
+    const screen = await render(<Diagram doc={ingress} fit className="w-[500px]" />);
+    const canvas = screen.container.querySelector("[data-lens-canvas]") as HTMLElement;
+    await expect
+      .poll(() => canvas.getBoundingClientRect().width, { timeout: 2000 })
+      .toBeCloseTo(500, 0);
+    expect((canvas.style as CSSStyleDeclaration).transform).toContain("scale(");
+  });
+
+  it("does not scale the canvas without fit", async () => {
+    const screen = await render(<Diagram doc={ingress} className="w-[500px]" />);
+    const laid = layout(ingress);
+    const canvas = screen.container.querySelector("[data-lens-canvas]") as HTMLElement;
+    expect(canvas.getBoundingClientRect().width).toBeCloseTo(laid.width, 0);
   });
 
   it("puts render-prop content inside chart cards only", async () => {
@@ -68,7 +93,7 @@ describe("Diagram", () => {
     const screen = await render(
       <Diagram doc={ingress} onNodeClick={onNodeClick} onEdgeClick={onEdgeClick} />,
     );
-    await screen.getByRole("button", { name: /^Warehouse/ }).click();
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
     expect(onNodeClick).toHaveBeenCalledWith("warehouse");
     const hit = screen.container.querySelector(
       "path[data-edge-hit='lake-to-warehouse']",
@@ -88,5 +113,18 @@ describe("Diagram", () => {
     const figure = screen.container.querySelector("[role='figure']");
     expect(figure?.getAttribute("aria-label")).toBe("Data ingress");
     await expect.element(screen.getByText("Raw lake → Warehouse, data")).toBeInTheDocument();
+  });
+
+  it("edges are keyboard reachable", async () => {
+    // `sr-only` clip-paths its contents to zero area, so a real pointer
+    // click can never land on this button (that is the point: it is a
+    // screen-reader/keyboard-only route). A native `.click()` on the
+    // element exercises the same activation a keyboard user's Enter would,
+    // without depending on Playwright's pointer hit-testing.
+    const onEdgeClick = vi.fn();
+    const screen = await render(<Diagram doc={ingress} onEdgeClick={onEdgeClick} />);
+    const button = screen.getByRole("button", { name: "Raw lake → Warehouse, data" });
+    (button.element() as HTMLButtonElement).click();
+    expect(onEdgeClick).toHaveBeenCalledWith("lake-to-warehouse");
   });
 });

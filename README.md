@@ -111,14 +111,24 @@ pixels.
 
 ### `Diagram` props
 
-| Prop                         | Type                                  | Notes                                 |
-| ---------------------------- | ------------------------------------- | ------------------------------------- |
-| `doc`                        | `LensDocument`                        | from `parseDocument`                  |
-| `view`                       | `string`                              | id of a view to draw                  |
-| `selected`                   | `string[]`                            | ids to keep lit; everything else dims |
-| `onNodeClick`, `onEdgeClick` | `(id) => void`                        | cards become buttons when set         |
-| `cardHeights`                | `{ compact?; withSubtitle?; chart? }` | defaults 52 / 62 / 140                |
-| `children`                   | `(node) => ReactNode`                 | body slot of every card that has one  |
+| Prop                         | Type                                  | Notes                                         |
+| ---------------------------- | ------------------------------------- | --------------------------------------------- |
+| `doc`                        | `LensDocument`                        | from `parseDocument`                          |
+| `view`                       | `string`                              | id of a view to draw                          |
+| `selected`                   | `string[]`                            | ids to keep lit; everything else dims         |
+| `onNodeClick`, `onEdgeClick` | `(id) => void`                        | cards become buttons when set                 |
+| `cardHeights`                | `{ compact?; withSubtitle?; chart? }` | defaults 52 / 62 / 140                        |
+| `className`                  | `string`                              | applied to the scroll viewport                |
+| `fit`                        | `boolean`                             | scale the canvas down to fit; default `false` |
+| `children`                   | `(node) => ReactNode`                 | body slot of every card that has one          |
+
+The root is a scroll viewport; size it with `className`. With `fit` the
+canvas scales down to the viewport width (never up).
+
+`layout()` runs during render and throws `LensLayoutError`
+(`UNKNOWN_VIEW`, `ROW_OVERFULL`, `NOTHING_TO_RENDER`) for a document it
+cannot draw; wrap `Diagram` in an error boundary if documents are
+user-supplied.
 
 ### Layout without React
 

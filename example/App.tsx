@@ -13,6 +13,7 @@ const UNITS: Record<string, string> = {
 
 export const App = () => {
   const [dark, setDark] = useState(false);
+  const [fit, setFit] = useState(false);
   const [view, setView] = useState<string | undefined>(undefined);
   const [selected, setSelected] = useState<string[]>([]);
   const [log, setLog] = useState<string[]>([]);
@@ -30,6 +31,13 @@ export const App = () => {
             onClick={() => setDark((value) => !value)}
           >
             {dark ? "Light" : "Dark"}
+          </button>
+          <button
+            type="button"
+            className="rounded border border-lens-card-border px-2 py-1 text-sm"
+            onClick={() => setFit((value) => !value)}
+          >
+            {fit ? "Unfit" : "Fit"}
           </button>
           <select
             className="rounded border border-lens-card-border bg-lens-card px-2 py-1 text-sm"
@@ -57,6 +65,8 @@ export const App = () => {
             doc={ingress}
             view={view}
             selected={selected}
+            fit={fit}
+            className="max-h-[70vh]"
             onNodeClick={(id) => {
               setSelected((previous) => (previous.includes(id) ? [] : [id]));
               note(`node ${id}`);
