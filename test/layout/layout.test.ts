@@ -102,16 +102,23 @@ describe("layout()", () => {
     }
   });
 
-  it("throws NOTHING_TO_RENDER for a view whose edge selection names nothing drawable", () => {
+  it("throws NOTHING_TO_RENDER for a view whose selection names nothing drawable", () => {
     const doc = parseDocument({
       version: 1,
       title: "T",
-      lanes: [{ id: "a", label: "A" }],
+      lanes: [
+        { id: "a", label: "A" },
+        { id: "b", label: "B" },
+      ],
       nodes: [{ id: "n", label: "N", kind: "service", lane: "a" }],
-      views: [{ id: "v", title: "V", scope: { kind: "selection", lanes: ["a"] } }],
+      views: [{ id: "v", title: "V", scope: { kind: "selection", lanes: ["b"] } }],
     });
-    const empty = { ...doc, nodes: [], views: doc.views };
-    expect(() => layout(empty as typeof doc, { view: "v" })).toThrow(/NOTHING_TO_RENDER|no nodes/);
+    expect(() => layout(doc, { view: "v" })).toThrow(LensLayoutError);
+    try {
+      layout(doc, { view: "v" });
+    } catch (error) {
+      expect((error as LensLayoutError).code).toBe("NOTHING_TO_RENDER");
+    }
   });
 
   it("honours cardHeights", () => {

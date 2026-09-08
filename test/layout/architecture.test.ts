@@ -64,4 +64,59 @@ describe("layoutArchitecture", () => {
     expect(Number.isInteger(layout.width)).toBe(true);
     expect(Number.isInteger(layout.height)).toBe(true);
   });
+
+  it("drops a lane with no seated nodes", () => {
+    const empty = {
+      lanes: [
+        { id: "a", label: "A", order: 0, status: "neutral" as const },
+        { id: "b", label: "B", order: 1, status: "neutral" as const },
+      ],
+      nodes: [
+        {
+          id: "n1",
+          label: "N1",
+          kind: "service" as const,
+          lane: "a",
+          row: 0,
+          status: "neutral" as const,
+          badges: [],
+          size: "compact" as const,
+        },
+      ],
+      edges: [],
+    };
+    const emptyLayout = layoutArchitecture(empty, DEFAULT_CARD_HEIGHTS);
+    expect(emptyLayout.lanes.length).toBe(1);
+  });
+
+  it("a row nobody occupies has zero height", () => {
+    const gapped = {
+      lanes: [{ id: "a", label: "A", order: 0, status: "neutral" as const }],
+      nodes: [
+        {
+          id: "n1",
+          label: "N1",
+          kind: "service" as const,
+          lane: "a",
+          row: 0,
+          status: "neutral" as const,
+          badges: [],
+          size: "compact" as const,
+        },
+        {
+          id: "n2",
+          label: "N2",
+          kind: "service" as const,
+          lane: "a",
+          row: 2,
+          status: "neutral" as const,
+          badges: [],
+          size: "compact" as const,
+        },
+      ],
+      edges: [],
+    };
+    const gappedLayout = layoutArchitecture(gapped, DEFAULT_CARD_HEIGHTS);
+    expect(gappedLayout.grid.rows[1]?.height).toBe(0);
+  });
 });
