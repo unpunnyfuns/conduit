@@ -39,7 +39,7 @@ Three layers, strictly one-directional:
 - **Card heights are declared, never measured.** `size: "compact" | "chart" | number`; `Card` reserves the body from `headerHeight` down. This is what lets a chart mount without relayout.
 - **Colours come only from `src/theme.css` tokens** (`--color-conduit-*`, with a `.dark` block), consumed through Tailwind utilities. Consumers must add `@source "../node_modules/@unpunnyfuns/conduit"`.
 - **Layout-coupled sizes** (`PILL_TEXT_SIZE`, `BADGE_HEIGHT`) are imported from `src/layout/design.ts` into components; purely cosmetic px values are Tailwind arbitraries.
-- **Direction is a frame, not a second engine.** `frame.ts` feeds `architecture.ts`/`congestion.ts` the numbers for the chosen direction; the engine always lays out columns-with-rows-down and `layout()` transposes to screen space for `"down"`. `"right"` is guarded byte-identical by `test/layout/direction.test.ts`.
+- **Direction is a frame, not a second engine.** `frame.ts` feeds `architecture.ts`/`congestion.ts` the numbers for the chosen direction; the engine always lays out columns-with-rows-down and `layout()` transposes to screen space for `"down"`. `"right"` is guarded byte-identical by `test/layout/direction.test.ts`. Band height in `"down"` floors at `cardHeights.chart` so ordinary edits don't move bands.
 
 ## Conventions
 

@@ -49,13 +49,14 @@ const halves = (contentWidth: number): number[] => {
 };
 
 /**
- * The tallest stack of cards any row holds, so every band can be the same
- * height. Never shorter than a compact card, so an empty-looking band still
- * reads as a lane.
+ * The tallest stack of cards any row holds. A band is always at least a
+ * chart card tall so that ordinary documents — nothing taller than a chart,
+ * no pair taller than one — keep every band the same height whatever is
+ * added; a taller row is the overflow case and grows every band together.
  */
 const tallestRow = (graph: ScopedGraph, heights: CardHeights): number => {
   const seating = seatNodes(orderLanes(graph.lanes), graph.nodes, graph.edges);
-  let tallest = heights.compact;
+  let tallest = 0;
   for (const rows of seating.rowsByLane.values())
     for (const row of rows) {
       const stacked =
@@ -86,7 +87,7 @@ export const frameFor = (direction: Direction, graph: ScopedGraph, heights: Card
     case "down":
       return {
         direction,
-        laneCross: tallestRow(graph, heights),
+        laneCross: Math.max(heights.chart, tallestRow(graph, heights)),
         crossStart: LANE_HEADER_STRIP,
         crossEnd: LANE_BOTTOM_PADDING,
         crossStartRoutable: 0,

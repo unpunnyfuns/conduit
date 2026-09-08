@@ -85,6 +85,34 @@ describe("direction down", () => {
     );
   });
 
+  it("does not move earlier or later bands when a compact card is added", () => {
+    const withExtra = parseDocument({
+      ...down,
+      nodes: [
+        ...down.nodes,
+        { id: "extra", label: "Extra", kind: "service", lane: "consume", row: 2 },
+      ],
+    });
+    const extraLaid = layout(withExtra);
+    for (const lane of down.lanes)
+      expect(extraLaid.atlas.lanes[lane.id], lane.id).toEqual(laid.atlas.lanes[lane.id]);
+  });
+
+  it("grows every band together when a row outgrows a chart card", () => {
+    const grown = parseDocument({
+      ...down,
+      nodes: down.nodes.map((node) =>
+        node.id === "reporting-job" ? { ...node, size: 300 } : node,
+      ),
+    });
+    const grownLaid = layout(grown);
+    const heights = ["sources", "ingest", "validate", "store", "consume"].map(
+      (id) => grownLaid.atlas.lanes[id]!.height,
+    );
+    expect(new Set(heights).size).toBe(1);
+    expect(heights[0]).toBeGreaterThan(laneBox("sources").height);
+  });
+
   it("keeps every card 372 wide and its declared height tall", () => {
     for (const node of down.nodes) {
       expect(nodeBox(node.id).width, node.id).toBe(LANE_CONTENT_WIDTH);
