@@ -15,3 +15,4 @@ export type { EdgeEmphasis, EdgeKind, NodeKind, Status } from "./schema/primitiv
 export { STATUSES } from "./schema/primitives.js";
 export { LensDocumentError, type Parsed, type SchemaIssue } from "./schema/errors.js";
 export { parseDocument, safeParseDocument } from "./schema/parse.js";
+export * from "./layout.js";
