@@ -1,5 +1,5 @@
 import { Diagram } from "@unpunnyfuns/conduit";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ingress } from "./data/ingress.js";
 import { Sparkline } from "./Sparkline.js";
 
@@ -14,11 +14,13 @@ const UNITS: Record<string, string> = {
 export const App = () => {
   const [dark, setDark] = useState(false);
   const [fit, setFit] = useState(false);
+  const [direction, setDirection] = useState<"right" | "down">("right");
   const [view, setView] = useState<string | undefined>(undefined);
   const [selected, setSelected] = useState<string[]>([]);
   const [log, setLog] = useState<string[]>([]);
 
   const note = (entry: string) => setLog((previous) => [entry, ...previous].slice(0, 20));
+  const doc = useMemo(() => ({ ...ingress, direction }), [direction]);
 
   return (
     <div className={dark ? "dark" : undefined}>
@@ -38,6 +40,13 @@ export const App = () => {
             onClick={() => setFit((value) => !value)}
           >
             {fit ? "Unfit" : "Fit"}
+          </button>
+          <button
+            type="button"
+            className="rounded border border-conduit-card-border px-2 py-1 text-sm"
+            onClick={() => setDirection((value) => (value === "right" ? "down" : "right"))}
+          >
+            {direction === "right" ? "Down" : "Right"}
           </button>
           <select
             className="rounded border border-conduit-card-border bg-conduit-card px-2 py-1 text-sm"
@@ -62,7 +71,7 @@ export const App = () => {
 
         <div className="flex flex-wrap gap-6">
           <Diagram
-            doc={ingress}
+            doc={doc}
             view={view}
             selected={selected}
             fit={fit}

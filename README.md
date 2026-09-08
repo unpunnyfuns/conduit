@@ -67,6 +67,7 @@ type ConduitDocumentInput = {
   version: 1;
   title: string;
   summary?: string;
+  direction?: "right" | "down";
   lanes: { id; label; subtitle?; order?; status?; summary? }[];
   nodes: {
     id;
@@ -108,6 +109,9 @@ Two nodes with the same `row` in one lane sit side by side; a third throws
 `ROW_OVERFULL`. Status affects colour only. Omit `row` to derive it from
 edges. `size: "chart"` reserves a body slot; a number is a height in
 pixels.
+
+`direction: "down"` draws lanes as horizontal bands with cards flowing left
+to right; `row` then means column. Default `"right"`.
 
 ### `Diagram` props
 

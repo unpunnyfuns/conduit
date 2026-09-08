@@ -17,4 +17,17 @@ describe("example app", () => {
     await expect.element(screen.getByText("node warehouse")).toBeInTheDocument();
     await expect.element(screen.getByRole("button", { name: "Clear selection" })).toBeVisible();
   });
+
+  it("toggles direction", async () => {
+    const screen = await render(<App />);
+    const before = (
+      screen.container.querySelector("[data-conduit-lane='ingest']") as HTMLElement
+    ).getBoundingClientRect();
+    await screen.getByRole("button", { name: "Down", exact: true }).click();
+    const after = (
+      screen.container.querySelector("[data-conduit-lane='ingest']") as HTMLElement
+    ).getBoundingClientRect();
+    expect(after.width).toBeGreaterThan(before.width);
+    await expect.element(screen.getByRole("button", { name: "Right" })).toBeVisible();
+  });
 });

@@ -131,4 +131,23 @@ describe("Diagram", () => {
     (button.element() as HTMLButtonElement).click();
     expect(onEdgeClick).toHaveBeenCalledWith("lake-to-warehouse");
   });
+
+  it("draws direction down as stacked bands with cards flowing right", async () => {
+    const screen = await render(<Diagram doc={{ ...ingress, direction: "down" }} />);
+    const top = (selector: string) =>
+      (screen.container.querySelector(selector) as HTMLElement).getBoundingClientRect().top;
+    const left = (selector: string) =>
+      (screen.container.querySelector(selector) as HTMLElement).getBoundingClientRect().left;
+    expect(top("[data-conduit-lane='ingest']")).toBeGreaterThan(
+      top("[data-conduit-lane='sources']"),
+    );
+    expect(top("[data-conduit-lane='store']")).toBeGreaterThan(top("[data-conduit-lane='ingest']"));
+    expect(left("[data-conduit-node='batch-loader']")).toBeGreaterThan(
+      left("[data-conduit-node='kafka-ingest']"),
+    );
+    expect(top("[data-conduit-node='batch-loader']")).toBeCloseTo(
+      top("[data-conduit-node='kafka-ingest']"),
+      0,
+    );
+  });
 });
