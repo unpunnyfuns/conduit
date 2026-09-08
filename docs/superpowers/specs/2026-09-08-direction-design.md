@@ -53,7 +53,7 @@ type Frame = {
 | `alongStart` / `alongEnd` | `CONTENT_TOP − LANE_TOP` (48) / `LANE_BOTTOM_PADDING` (20) | `LANE_PADDING_X` / `LANE_PADDING_X` |
 | `along(node)` | `cardHeight(node)` | `LANE_CONTENT_WIDTH` (372) |
 | `crossSplit(row)` | equal halves of 372 for a pair, else `[372]` | each card's `cardHeight`, in row order |
-| `corridorWidth` | `crossStart + crossEnd + LANE_GAP` | same formula with `"down"` paddings |
+| `corridorWidth` | `crossStart + crossEnd + LANE_GAP` | `crossEnd + LANE_GAP` (routes never enter the header strip) |
 | `bandWidth` | `ROW_GAP` | `ROW_GAP` |
 
 `LANE_HEADER_STRIP = 48` is a new constant in `design.ts` (it equals `CONTENT_TOP − LANE_TOP`; `"right"` reads that difference through the frame so the number lives in one place). `laneCross` for `"down"` is computed once per layout from seating, so every band is the same height — the same stability rule as today's constant lane width: adding a chart card never moves the bands below it, only makes all bands taller together.

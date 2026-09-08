@@ -29,7 +29,7 @@ export type Frame = {
   /** Padding inside a lane before and after its content, frame x. */
   crossStart: number;
   crossEnd: number;
-  /** How much of `crossStart`, measured from the lane's edge, a route may run through. */
+  /** How much of `crossStart`, measured from the lane's edge, a route may run through. Zero keeps routes out of a band's header strip. */
   crossStartRoutable: number;
   /** Room inside a lane before the first row and after the last, frame y. */
   alongStart: number;
@@ -89,12 +89,12 @@ export const frameFor = (direction: Direction, graph: ScopedGraph, heights: Card
         laneCross: tallestRow(graph, heights),
         crossStart: LANE_HEADER_STRIP,
         crossEnd: LANE_BOTTOM_PADDING,
-        crossStartRoutable: LANE_PADDING_X,
+        crossStartRoutable: 0,
         alongStart: LANE_PADDING_X,
         alongEnd: LANE_PADDING_X,
         along: () => LANE_CONTENT_WIDTH,
         crossSplit: (row) => row.nodes.map((node) => cardHeight(node, heights)),
-        corridorWidth: LANE_BOTTOM_PADDING + LANE_GAP + LANE_PADDING_X,
+        corridorWidth: LANE_BOTTOM_PADDING + LANE_GAP,
         bandWidth: ROW_GAP,
       };
   }

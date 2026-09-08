@@ -91,11 +91,11 @@ describe("frameFor down", () => {
     expect(pairFrame.laneCross).toBe(heights.chart * 2 + CARD_GAP_X);
   });
 
-  it("swaps the paddings and keeps only the lower part of the header strip routable", () => {
+  it("swaps the paddings and keeps routes out of the header strip", () => {
     expect([frame.crossStart, frame.crossEnd]).toEqual([LANE_HEADER_STRIP, LANE_BOTTOM_PADDING]);
-    expect(frame.crossStartRoutable).toBe(LANE_PADDING_X);
+    expect(frame.crossStartRoutable).toBe(0);
     expect([frame.alongStart, frame.alongEnd]).toEqual([LANE_PADDING_X, LANE_PADDING_X]);
-    expect(frame.corridorWidth).toBe(LANE_BOTTOM_PADDING + LANE_GAP + LANE_PADDING_X);
+    expect(frame.corridorWidth).toBe(LANE_BOTTOM_PADDING + LANE_GAP);
     expect(frame.bandWidth).toBe(ROW_GAP);
   });
 
