@@ -11,6 +11,7 @@ import {
   ROW_GAP,
 } from "../../src/layout/design.js";
 import { frameFor } from "../../src/layout/frame.js";
+import { layoutArchitecture } from "../../src/layout/architecture.js";
 
 const doc = parseDocument({
   version: 1,
@@ -53,6 +54,11 @@ describe("frameFor right", () => {
       LANE_CONTENT_WIDTH - CARD_GAP_X - half,
     ]);
     expect(frame.crossSplit({ grid: 0, nodes: [chart!] })).toEqual([LANE_CONTENT_WIDTH]);
+  });
+
+  it("corridorWidth equals the corridor the layout emits", () => {
+    const laid = layoutArchitecture(graph, frame);
+    for (const c of laid.grid.corridors) expect(c.right - c.left).toBe(frame.corridorWidth);
   });
 });
 
@@ -97,6 +103,11 @@ describe("frameFor down", () => {
     expect([frame.alongStart, frame.alongEnd]).toEqual([LANE_PADDING_X, LANE_PADDING_X]);
     expect(frame.corridorWidth).toBe(LANE_BOTTOM_PADDING + LANE_GAP);
     expect(frame.bandWidth).toBe(ROW_GAP);
+  });
+
+  it("corridorWidth equals the corridor the layout emits", () => {
+    const laid = layoutArchitecture(graph, frame);
+    for (const c of laid.grid.corridors) expect(c.right - c.left).toBe(frame.corridorWidth);
   });
 
   it("never lets a band be shorter than a chart card", () => {
