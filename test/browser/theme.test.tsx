@@ -16,7 +16,7 @@ describe("theme tokens", () => {
       </div>,
     );
     const box = screen.getByTestId("box").element();
-    expect(getComputedStyle(box).backgroundColor).toBe("rgb(13, 17, 23)");
+    expect(getComputedStyle(box).backgroundColor).toBe("rgb(28, 33, 40)");
   });
 });
 
