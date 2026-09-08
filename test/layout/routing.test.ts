@@ -28,6 +28,7 @@ const doc = parseDocument({
     { id: "a1", label: "a1", kind: "service", lane: "a", row: 1 },
     { id: "a3", label: "a3", kind: "service", lane: "a", row: 3 },
     { id: "b0", label: "b0", kind: "service", lane: "b", row: 0 },
+    { id: "b1", label: "b1", kind: "service", lane: "b", row: 1 },
     { id: "c0", label: "c0", kind: "service", lane: "c", row: 0 },
     { id: "b2", label: "b2", kind: "service", lane: "b", row: 2 },
     { id: "b3", label: "b3", kind: "service", lane: "b", row: 3 },
@@ -38,8 +39,8 @@ const doc = parseDocument({
     { id: "skip", from: "a0", to: "a3", kind: "call" },
     { id: "far", from: "a0", to: "c0", kind: "http" },
     { id: "loop", from: "b0", to: "b0", kind: "call" },
-    { id: "stem1", from: "b0", to: "b2", kind: "call" },
-    { id: "stem2", from: "b0", to: "b3", kind: "call" },
+    { id: "stem1", from: "b0", to: "b1", kind: "call" },
+    { id: "stem2", from: "b0", to: "b2", kind: "call" },
   ],
 });
 
