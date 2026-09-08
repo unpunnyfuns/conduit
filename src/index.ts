@@ -1,4 +1,3 @@
-export { assertNever } from "./assert.js";
 export type {
   Badge as BadgeInput,
   Edge,

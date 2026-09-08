@@ -17,11 +17,14 @@ export const Badge = z.strictObject({
 });
 export type Badge = z.infer<typeof Badge>;
 
-/** `compact` is the header alone; `chart` reserves a body slot; a number is a height in px. */
+/**
+ * `compact` is the header alone; `chart` reserves a body slot; a number is a
+ * height in px, no shorter than a compact card's own height.
+ */
 export const NodeSize = z.union([
   z.literal("compact"),
   z.literal("chart"),
-  z.number().min(40).max(1000),
+  z.number().min(52).max(1000),
 ]);
 export type NodeSize = z.infer<typeof NodeSize>;
 
