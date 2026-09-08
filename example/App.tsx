@@ -1,4 +1,4 @@
-import { Diagram } from "@unpunnyfuns/conduit";
+import { Diagram, type Highlight } from "@unpunnyfuns/conduit";
 import { useMemo, useState } from "react";
 import { ingress } from "./data/ingress.js";
 import { Sparkline } from "./Sparkline.js";
@@ -15,6 +15,7 @@ export const App = () => {
   const [dark, setDark] = useState(false);
   const [fit, setFit] = useState(false);
   const [direction, setDirection] = useState<"right" | "down">("right");
+  const [highlight, setHighlight] = useState<Highlight>("upstream");
   const [view, setView] = useState<string | undefined>(undefined);
   const [selected, setSelected] = useState<string[]>([]);
   const [log, setLog] = useState<string[]>([]);
@@ -62,6 +63,17 @@ export const App = () => {
               </option>
             ))}
           </select>
+          <select
+            className="rounded border border-conduit-card-border bg-conduit-card px-2 py-1 text-sm"
+            value={highlight}
+            onChange={(event) => setHighlight(event.target.value as Highlight)}
+            aria-label="Highlight"
+          >
+            <option value="neighbours">Neighbours</option>
+            <option value="upstream">Upstream</option>
+            <option value="downstream">Downstream</option>
+            <option value="both">Both</option>
+          </select>
           {selected.length > 0 && (
             <button type="button" className="text-sm underline" onClick={() => setSelected([])}>
               Clear selection
@@ -74,6 +86,7 @@ export const App = () => {
             doc={doc}
             view={view}
             selected={selected}
+            highlight={highlight}
             fit={fit}
             className="max-h-[70vh]"
             onNodeClick={(id) => {
