@@ -1,6 +1,6 @@
 import type { ConduitNode } from "../schema/document.js";
 import type { Direction } from "../schema/primitives.js";
-import { cardHeight, orderLanes } from "./architecture.js";
+import { cardHeight, orderLanes } from "./lanes.js";
 import {
   CARD_GAP_X,
   LANE_BOTTOM_PADDING,

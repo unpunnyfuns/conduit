@@ -1,16 +1,12 @@
 import type { Lane, ConduitNode } from "../schema/document.js";
-import {
-  CARD_GAP_X,
-  DIAGRAM_MARGIN,
-  LANE_GAP,
-  LANE_TOP,
-  ROW_GAP,
-  type CardHeights,
-} from "./design.js";
+import { CARD_GAP_X, DIAGRAM_MARGIN, LANE_GAP, LANE_TOP, ROW_GAP } from "./design.js";
 import type { Frame } from "./frame.js";
 import type { Box } from "./geometry.js";
+import { orderLanes } from "./lanes.js";
 import type { ScopedGraph } from "./scope.js";
 import { seatNodes } from "./seating.js";
+
+export { cardHeight, orderLanes } from "./lanes.js";
 
 export type PlacedNode = {
   node: ConduitNode;
@@ -55,22 +51,6 @@ export type ArchitectureLayout = {
   nodes: PlacedNode[];
   grid: LayoutGrid;
 };
-
-export const cardHeight = (node: ConduitNode, heights: CardHeights): number => {
-  if (typeof node.size === "number") return node.size;
-  if (node.size === "chart") return heights.chart;
-  return node.subtitle === undefined ? heights.compact : heights.withSubtitle;
-};
-
-export const orderLanes = (lanes: readonly Lane[]): Lane[] =>
-  lanes
-    .map((lane, index) => ({ lane, index }))
-    .sort(
-      (a, b) =>
-        (a.lane.order ?? Number.MAX_SAFE_INTEGER) - (b.lane.order ?? Number.MAX_SAFE_INTEGER) ||
-        a.index - b.index,
-    )
-    .map(({ lane }) => lane);
 
 /**
  * Lanes as columns along x, rows going down y — always. Which screen axis
