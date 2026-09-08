@@ -101,21 +101,22 @@ export const shiftCurve = (curve: Curve, dx: number, dy: number): Curve => {
   };
 };
 
+const transposePoint = (point: Point): Point => ({ x: point.y, y: point.x });
+
 /** The same curve with x and y swapped on every point. */
 export const transposeCurve = (curve: Curve): Curve => {
-  const flip = (point: Point): Point => ({ x: point.y, y: point.x });
   return {
-    from: flip(curve.from),
+    from: transposePoint(curve.from),
     segments: curve.segments.map((segment) => {
       switch (segment.kind) {
         case "line":
-          return { kind: "line", to: flip(segment.to) };
+          return { kind: "line", to: transposePoint(segment.to) };
         case "cubic":
           return {
             kind: "cubic",
-            first: flip(segment.first),
-            second: flip(segment.second),
-            to: flip(segment.to),
+            first: transposePoint(segment.first),
+            second: transposePoint(segment.second),
+            to: transposePoint(segment.to),
           };
         default:
           return assertNever(segment, "Unhandled path segment");
