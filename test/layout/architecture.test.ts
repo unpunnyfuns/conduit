@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseDocument } from "../../src/index.js";
 import { layoutArchitecture } from "../../src/layout/architecture.js";
 import { DEFAULT_CARD_HEIGHTS, LANE_CONTENT_WIDTH, CARD_GAP_X } from "../../src/layout/design.js";
+import { frameFor } from "../../src/layout/frame.js";
 
 const doc = parseDocument({
   version: 1,
@@ -20,7 +21,7 @@ const doc = parseDocument({
 });
 
 const graph = { lanes: doc.lanes, nodes: doc.nodes, edges: doc.edges };
-const layout = layoutArchitecture(graph, DEFAULT_CARD_HEIGHTS);
+const layout = layoutArchitecture(graph, frameFor("right", graph, DEFAULT_CARD_HEIGHTS));
 const placed = (id: string) => layout.nodes.find(({ node }) => node.id === id);
 
 describe("layoutArchitecture", () => {
@@ -52,7 +53,8 @@ describe("layoutArchitecture", () => {
   });
 
   it("honours a custom chart height", () => {
-    const tall = layoutArchitecture(graph, { ...DEFAULT_CARD_HEIGHTS, chart: 300 });
+    const heights = { ...DEFAULT_CARD_HEIGHTS, chart: 300 };
+    const tall = layoutArchitecture(graph, frameFor("right", graph, heights));
     expect(tall.nodes.find(({ node }) => node.id === "chart")?.box.height).toBe(300);
   });
 
@@ -85,7 +87,7 @@ describe("layoutArchitecture", () => {
       ],
       edges: [],
     };
-    const emptyLayout = layoutArchitecture(empty, DEFAULT_CARD_HEIGHTS);
+    const emptyLayout = layoutArchitecture(empty, frameFor("right", empty, DEFAULT_CARD_HEIGHTS));
     expect(emptyLayout.lanes.length).toBe(1);
   });
 
@@ -116,7 +118,10 @@ describe("layoutArchitecture", () => {
       ],
       edges: [],
     };
-    const gappedLayout = layoutArchitecture(gapped, DEFAULT_CARD_HEIGHTS);
+    const gappedLayout = layoutArchitecture(
+      gapped,
+      frameFor("right", gapped, DEFAULT_CARD_HEIGHTS),
+    );
     expect(gappedLayout.grid.rows[1]?.height).toBe(0);
   });
 });

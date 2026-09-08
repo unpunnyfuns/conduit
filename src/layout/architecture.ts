@@ -1,19 +1,16 @@
 import type { Lane, ConduitNode } from "../schema/document.js";
 import {
   CARD_GAP_X,
-  CONTENT_TOP,
   DIAGRAM_MARGIN,
-  LANE_BOTTOM_PADDING,
-  LANE_CONTENT_WIDTH,
   LANE_GAP,
-  LANE_PADDING_X,
   LANE_TOP,
   ROW_GAP,
   type CardHeights,
 } from "./design.js";
+import type { Frame } from "./frame.js";
 import type { Box } from "./geometry.js";
 import type { ScopedGraph } from "./scope.js";
-import { seatNodes, type SeatedRow } from "./seating.js";
+import { seatNodes } from "./seating.js";
 
 export type PlacedNode = {
   node: ConduitNode;
@@ -73,18 +70,13 @@ export const orderLanes = (lanes: readonly Lane[]): Lane[] =>
     .map(({ lane }) => lane);
 
 /**
- * A pair divides its row into equal halves. Splitting in proportion to what
- * each card's text asked for would mean a rename moves its neighbour.
+ * Lanes as columns along x, rows going down y — always. Which screen axis
+ * each of those becomes is the frame's business, and `layout()` transposes
+ * afterwards when the document flows the other way.
  */
-const rowWidths = (contentWidth: number, row: SeatedRow): number[] => {
-  if (row.nodes.length < 2) return [contentWidth];
-  const half = Math.round((contentWidth - CARD_GAP_X) / 2);
-  return [half, contentWidth - CARD_GAP_X - half];
-};
-
 export const layoutArchitecture = (
   graph: ScopedGraph,
-  heights: CardHeights,
+  frame: Frame,
   expansions?: GapExpansions,
 ): ArchitectureLayout => {
   const corridorExtra = (index: number): number => expansions?.corridors.get(index) ?? 0;
@@ -98,17 +90,18 @@ export const layoutArchitecture = (
     return rows === undefined ? [] : [{ lane, rows }];
   });
 
-  const laneBoxWidth = LANE_CONTENT_WIDTH + LANE_PADDING_X * 2;
+  const laneBoxWidth = frame.crossStart + frame.laneCross + frame.crossEnd;
+  const contentTop = LANE_TOP + frame.alongStart;
 
   const gridHeights = new Map<number, number>();
   for (const { rows } of lanes)
     for (const { grid, nodes } of rows) {
-      const height = Math.max(...nodes.map((node) => cardHeight(node, heights)));
+      const height = Math.max(...nodes.map((node) => frame.along(node)));
       gridHeights.set(grid, Math.max(gridHeights.get(grid) ?? 0, height));
     }
 
   const gridRows: { top: number; height: number }[] = [];
-  let cursor = CONTENT_TOP;
+  let cursor = contentTop;
   for (let grid = 0; grid < seating.rowCount; grid += 1) {
     if (grid > 0) cursor += bandExtra(grid);
     const height = gridHeights.get(grid) ?? 0;
@@ -117,14 +110,14 @@ export const layoutArchitecture = (
   }
   const contentBottom = cursor - ROW_GAP;
 
-  const laneBottom = contentBottom + LANE_BOTTOM_PADDING + bandExtra(seating.rowCount);
+  const laneBottom = contentBottom + frame.alongEnd + bandExtra(seating.rowCount);
   const placedLanes: PlacedLane[] = [];
   const placedNodes: PlacedNode[] = [];
   let laneX = DIAGRAM_MARGIN;
 
   lanes.forEach(({ lane, rows }, laneIndex) => {
     laneX += corridorExtra(laneIndex);
-    const contentX = laneX + LANE_PADDING_X;
+    const contentX = laneX + frame.crossStart;
 
     placedLanes.push({
       lane,
@@ -132,15 +125,15 @@ export const layoutArchitecture = (
     });
 
     for (const row of rows) {
-      const top = gridRows[row.grid]?.top ?? CONTENT_TOP;
-      const widths = rowWidths(LANE_CONTENT_WIDTH, row);
+      const top = gridRows[row.grid]?.top ?? contentTop;
+      const widths = frame.crossSplit(row);
 
       let x = contentX;
       row.nodes.forEach((node, index) => {
-        const width = widths[index] ?? LANE_CONTENT_WIDTH;
+        const width = widths[index] ?? frame.laneCross;
         placedNodes.push({
           node,
-          box: { x, y: top, width, height: cardHeight(node, heights) },
+          box: { x, y: top, width, height: frame.along(node) },
           row: row.grid,
           laneIndex,
         });
@@ -151,18 +144,22 @@ export const layoutArchitecture = (
     laneX += laneBoxWidth + LANE_GAP;
   });
 
-  const gutter = LANE_PADDING_X * 2 + LANE_GAP;
   const corridors = placedLanes.map(({ box }, index) => ({
-    left: box.x + LANE_PADDING_X - gutter - corridorExtra(index),
-    right: box.x + LANE_PADDING_X,
+    left: box.x - LANE_GAP - frame.crossEnd - corridorExtra(index),
+    right: box.x + frame.crossStartRoutable,
   }));
   const lastContentRight =
     (placedLanes[placedLanes.length - 1]?.box.x ?? DIAGRAM_MARGIN) +
-    LANE_PADDING_X +
-    LANE_CONTENT_WIDTH;
+    frame.crossStart +
+    frame.laneCross;
   corridors.push({
     left: lastContentRight,
-    right: lastContentRight + gutter + corridorExtra(placedLanes.length),
+    right:
+      lastContentRight +
+      frame.crossEnd +
+      LANE_GAP +
+      frame.crossStartRoutable +
+      corridorExtra(placedLanes.length),
   });
 
   return {

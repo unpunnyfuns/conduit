@@ -12,6 +12,7 @@ import {
 } from "./design.js";
 import { curveBounds, pathOf, shiftCurve } from "./edges.js";
 import { ConduitLayoutError } from "./errors.js";
+import { frameFor } from "./frame.js";
 import { roundCoord, type Box } from "./geometry.js";
 import { placeLabelPills } from "./labels.js";
 import { findView, resolveScope } from "./scope.js";
@@ -84,7 +85,8 @@ export const layout = (doc: ConduitDocument, options: LayoutOptions = {}): Layou
   if (graph.nodes.length === 0)
     throw new ConduitLayoutError("NOTHING_TO_RENDER", "no nodes are in scope for this view");
 
-  const { layout: placed, routed } = relieveCongestion(graph, heights);
+  const frame = frameFor(doc.direction, graph, heights);
+  const { layout: placed, routed } = relieveCongestion(graph, frame);
   const pills = placeLabelPills(routed);
 
   const drawn: Box[] = [

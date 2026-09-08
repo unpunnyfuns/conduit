@@ -3,15 +3,15 @@ import { parseDocument, type ConduitDocument } from "../../src/index.js";
 import { layoutArchitecture } from "../../src/layout/architecture.js";
 import { DEFAULT_CARD_HEIGHTS } from "../../src/layout/design.js";
 import { curveBounds, pathOf, routeEdges, shiftCurve } from "../../src/layout/edges.js";
+import { frameFor } from "../../src/layout/frame.js";
 
-const routesOf = (doc: ConduitDocument) =>
-  routeEdges(
+const routesOf = (doc: ConduitDocument) => {
+  const graph = { lanes: doc.lanes, nodes: doc.nodes, edges: doc.edges };
+  return routeEdges(
     doc.edges,
-    layoutArchitecture(
-      { lanes: doc.lanes, nodes: doc.nodes, edges: doc.edges },
-      DEFAULT_CARD_HEIGHTS,
-    ),
+    layoutArchitecture(graph, frameFor("right", graph, DEFAULT_CARD_HEIGHTS)),
   );
+};
 
 const isStraight = (path: string): boolean => /^M[-\d.,]+ L[-\d.,]+$/.test(path);
 
@@ -63,10 +63,10 @@ describe("routeEdges", () => {
   });
 
   it("crosses an intermediate lane without passing through its card", () => {
-    const b0 = layoutArchitecture(
-      { lanes: doc.lanes, nodes: doc.nodes, edges: doc.edges },
-      DEFAULT_CARD_HEIGHTS,
-    ).nodes.find(({ node }) => node.id === "b0");
+    const graph = { lanes: doc.lanes, nodes: doc.nodes, edges: doc.edges };
+    const b0 = layoutArchitecture(graph, frameFor("right", graph, DEFAULT_CARD_HEIGHTS)).nodes.find(
+      ({ node }) => node.id === "b0",
+    );
     const bounds = curveBounds(
       routed.find(({ edge }) => edge.id === "far")?.curve ?? { from: { x: 0, y: 0 }, segments: [] },
     );

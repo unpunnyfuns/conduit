@@ -1,12 +1,5 @@
-import {
-  LANE_BOTTOM_PADDING,
-  LANE_GAP,
-  LANE_PADDING_X,
-  ROW_GAP,
-  TRACK_CLEARANCE,
-  TRACK_PITCH_MIN,
-  type CardHeights,
-} from "./design.js";
+import { TRACK_CLEARANCE, TRACK_PITCH_MIN } from "./design.js";
+import type { Frame } from "./frame.js";
 import type { ScopedGraph } from "./scope.js";
 import {
   layoutArchitecture,
@@ -27,19 +20,19 @@ import { channelTraffic, routeEdges, type ChannelTraffic, type RoutedEdge } from
  */
 export const relieveCongestion = (
   graph: ScopedGraph,
-  heights: CardHeights,
+  frame: Frame,
 ): { layout: ArchitectureLayout; routed: RoutedEdge[] } => {
   let expansions: GapExpansions = { corridors: new Map(), bands: new Map() };
-  let layout = layoutArchitecture(graph, heights, expansions);
+  let layout = layoutArchitecture(graph, frame, expansions);
 
   // Widening never changes which gaps the routes choose — plans are made of
   // lane and row indices, and cards keep their in-lane positions — so the
   // second round sees the same traffic and settles. The bound is a backstop.
   for (let round = 0; round < 3; round += 1) {
-    const needed = expansionsFor(channelTraffic(graph.edges, layout), layout.grid);
+    const needed = expansionsFor(channelTraffic(graph.edges, layout), layout.grid, frame);
     if (sameExpansions(needed, expansions)) break;
     expansions = needed;
-    layout = layoutArchitecture(graph, heights, expansions);
+    layout = layoutArchitecture(graph, frame, expansions);
   }
 
   return { layout, routed: routeEdges(graph.edges, layout) };
@@ -49,19 +42,17 @@ export const relieveCongestion = (
 const widthNeeded = (traffic: number): number =>
   (traffic - 1) * TRACK_PITCH_MIN + TRACK_CLEARANCE * 2;
 
-const CORRIDOR_WIDTH = LANE_PADDING_X * 2 + LANE_GAP;
-
-const expansionsFor = (traffic: ChannelTraffic, grid: LayoutGrid): GapExpansions => {
+const expansionsFor = (traffic: ChannelTraffic, grid: LayoutGrid, frame: Frame): GapExpansions => {
   const corridors = new Map<number, number>();
   for (const [index, count] of traffic.corridors) {
-    const extra = widthNeeded(count) - CORRIDOR_WIDTH;
+    const extra = widthNeeded(count) - frame.corridorWidth;
     if (extra > 0) corridors.set(index, extra);
   }
 
   const bands = new Map<number, number>();
   for (const [index, count] of traffic.bands) {
     // The band after the last row is the sliver of lane bottom padding.
-    const width = index === grid.rows.length ? LANE_BOTTOM_PADDING : ROW_GAP;
+    const width = index === grid.rows.length ? frame.alongEnd : frame.bandWidth;
     const extra = widthNeeded(count) - width;
     if (extra > 0) bands.set(index, extra);
   }

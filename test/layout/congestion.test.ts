@@ -4,6 +4,7 @@ import { layout } from "../../src/layout.js";
 import { layoutArchitecture, type ArchitectureLayout } from "../../src/layout/architecture.js";
 import { relieveCongestion } from "../../src/layout/congestion.js";
 import { DEFAULT_CARD_HEIGHTS, LANE_GAP, TRACK_PITCH_MIN } from "../../src/layout/design.js";
+import { frameFor } from "../../src/layout/frame.js";
 import type { ScopedGraph } from "../../src/layout/scope.js";
 
 type ExtraEdge = { id: string; from: string; to: string };
@@ -67,8 +68,9 @@ describe("congestion", () => {
 
   it("an uncrowded document is untouched", () => {
     const graph = graphOf(buildDoc(3));
-    const plain = layoutArchitecture(graph, DEFAULT_CARD_HEIGHTS);
-    const relieved = relieveCongestion(graph, DEFAULT_CARD_HEIGHTS).layout;
+    const frame = frameFor("right", graph, DEFAULT_CARD_HEIGHTS);
+    const plain = layoutArchitecture(graph, frame);
+    const relieved = relieveCongestion(graph, frame).layout;
     expect(nodeBoxes(relieved)).toBe(nodeBoxes(plain));
   });
 
