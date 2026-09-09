@@ -185,6 +185,7 @@ export const EdgeLayer = ({
           <g
             key={edge.id}
             data-edge-group={edge.id}
+            data-edge-state={level}
             className={cn("transition-opacity", dimmed && "opacity-45")}
           >
             {hero && (

@@ -7,7 +7,7 @@ A per-edge live-state overlay so an app can flip a hop between live, idle, stale
 ## Goals
 
 - Changing communication state is one prop change: `edgeState` keyed by edge id.
-- No relayout: layout stays memoised on the document; a state change re-renders only `EdgeLayer`.
+- No relayout: layout stays memoised on the document; a state change never re-runs `layout()`; components re-render as React normally would.
 - State wins over the document's `animated`; the document's `status` is the base tone that `stale`/`down` override.
 
 ## Non-goals

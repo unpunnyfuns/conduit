@@ -27,11 +27,11 @@ export const App = () => {
 
   useEffect(() => {
     if (!outage) return;
-    const rates = [50, 200, 800, 2000];
+    const rates = [50, 200, 800, 2000] as const;
     let index = 0;
     const timer = setInterval(() => {
       index = (index + 1) % rates.length;
-      setRate(rates[index] as number);
+      setRate(rates[index] ?? rates[0]);
     }, 1000);
     return () => clearInterval(timer);
   }, [outage]);

@@ -150,6 +150,9 @@ touching the document or triggering a relayout. Per edge, with
 | `stale`       | off                                                           | `caution`  | as today                         |
 | `down`        | off                                                           | `critical` | dashed (`stroke-dasharray: 5 4`) |
 
+State tone replaces the document's `status` tone while set — a `critical`
+edge marked `stale` shows caution until the state clears.
+
 ```tsx
 import { Diagram, type EdgeState } from "@unpunnyfuns/conduit";
 

@@ -212,10 +212,22 @@ describe("Diagram", () => {
       "path[data-edge='batch-to-validator']",
     ) as SVGPathElement;
     expect(getComputedStyle(path).stroke).toBe("rgb(207, 34, 46)");
-    expect(getComputedStyle(path).strokeDasharray).not.toBe("none");
+    expect(getComputedStyle(path).strokeDasharray).toBe("5px, 4px");
     expect(
       screen.container.querySelectorAll("[data-pulse='batch-to-validator'] animateMotion").length,
     ).toBe(0);
+  });
+
+  it("state overrides the document's status but muted still dims", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "batch-to-legacy": { level: "stale" } }} />,
+    );
+    const path = screen.container.querySelector(
+      "path[data-edge='batch-to-legacy']",
+    ) as SVGPathElement;
+    const group = screen.container.querySelector("g[data-edge-group='batch-to-legacy']") as Element;
+    expect(getComputedStyle(path).stroke).toBe("rgb(191, 135, 0)");
+    expect(Number(getComputedStyle(group).opacity)).toBeLessThan(1);
   });
 
   it("colours a down edge's pill with the critical text tone", async () => {
