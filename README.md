@@ -142,13 +142,13 @@ user-supplied.
 touching the document or triggering a relayout. Per edge, with
 `state = edgeState[edge.id]`:
 
-| `state.level` | pulses                             | tone       | stroke                           |
-| ------------- | ---------------------------------- | ---------- | -------------------------------- |
-| absent        | document `animated`                | document   | as today                         |
-| `live`        | on, `dur = pulseDurationFor(rate)` | document   | as today                         |
-| `idle`        | off                                | document   | as today                         |
-| `stale`       | off                                | `caution`  | as today                         |
-| `down`        | off                                | `critical` | dashed (`stroke-dasharray: 5 4`) |
+| `state.level` | pulses                                                        | tone       | stroke                           |
+| ------------- | ------------------------------------------------------------- | ---------- | -------------------------------- |
+| absent        | document `animated`                                           | document   | as today                         |
+| `live`        | pulses on; period from `rate` when given, else the edge's own | document   | as today                         |
+| `idle`        | off                                                           | document   | as today                         |
+| `stale`       | off                                                           | `caution`  | as today                         |
+| `down`        | off                                                           | `critical` | dashed (`stroke-dasharray: 5 4`) |
 
 ```tsx
 import { Diagram, type EdgeState } from "@unpunnyfuns/conduit";

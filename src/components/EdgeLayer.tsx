@@ -174,8 +174,8 @@ export const EdgeLayer = ({
         const pulsing = level === undefined ? edge.animated : level === "live";
         const heroPulses = edge.emphasis === "hero";
         const duration =
-          level === "live"
-            ? pulseDurationFor(state?.rate)
+          level === "live" && state?.rate !== undefined
+            ? pulseDurationFor(state.rate)
             : heroPulses
               ? HERO_PULSE_DURATION
               : PULSE_DURATION;

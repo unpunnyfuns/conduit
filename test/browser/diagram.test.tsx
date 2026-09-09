@@ -243,6 +243,28 @@ describe("Diagram", () => {
     }
   });
 
+  it("keeps a hero edge's own train period when live without a rate", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "kafka-to-validator": { level: "live" } }} />,
+    );
+    const motions = screen.container.querySelectorAll(
+      "[data-pulse='kafka-to-validator'] animateMotion",
+    );
+    expect(motions.length).toBe(3);
+    for (const motion of motions) {
+      expect(motion.getAttribute("dur")).toBe("2.1s");
+    }
+  });
+
+  it("keeps a plain edge's default period when live without a rate", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "sftp-to-batch": { level: "live" } }} />,
+    );
+    const motions = screen.container.querySelectorAll("[data-pulse='sftp-to-batch'] animateMotion");
+    expect(motions.length).toBe(1);
+    expect(motions[0]?.getAttribute("dur")).toBe("1.6s");
+  });
+
   it("silences an animated edge marked idle", async () => {
     const screen = await render(
       <Diagram doc={ingress} edgeState={{ "partner-to-kafka": { level: "idle" } }} />,
