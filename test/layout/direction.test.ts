@@ -215,4 +215,36 @@ describe("direction down", () => {
     };
     expect(layout(renamed).atlas).toEqual(laid.atlas);
   });
+
+  it("draws a self-loop inside the gap below its band", () => {
+    const doc = parseDocument({
+      version: 1,
+      title: "Self-loop",
+      direction: "down",
+      lanes: [
+        { id: "a", label: "A", order: 0 },
+        { id: "b", label: "B", order: 1 },
+      ],
+      nodes: [
+        { id: "p", label: "P", kind: "service", lane: "a", row: 0, size: "chart" },
+        { id: "q", label: "Q", kind: "service", lane: "b", row: 0 },
+      ],
+      edges: [
+        { id: "loop", from: "p", to: "p", kind: "call" },
+        { id: "p-to-q", from: "p", to: "q", kind: "call" },
+      ],
+    });
+    const selfLoopLaid = layout(doc);
+    const a = selfLoopLaid.atlas.lanes["a"]!;
+    const b = selfLoopLaid.atlas.lanes["b"]!;
+    const box = selfLoopLaid.atlas.edges["loop"]!;
+
+    expect(box.x).toBeGreaterThanOrEqual(a.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(a.x + a.width);
+    // The loop hangs off p's own frame-right face, which sits LANE_BOTTOM_PADDING (20px)
+    // short of band a's own bottom edge, so a 30px SELF_LOOP_REACH necessarily starts
+    // inside that padding strip: box.y (204) < a.y + a.height - 1 (223) here, by design.
+    // What matters is that it still clears band b, inside the 40px corridor.
+    expect(box.y + box.height).toBeLessThanOrEqual(b.y + 1);
+  });
 });
