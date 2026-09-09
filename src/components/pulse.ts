@@ -18,7 +18,7 @@ export type EdgeState = {
 
 /** Seconds per pulse cycle for a rate, clamped so extremes stay legible. */
 export const pulseDurationFor = (rate?: number): number => {
-  if (rate === undefined || rate <= 0) return PULSE_DURATION;
+  if (rate === undefined || !(rate > 0)) return PULSE_DURATION;
   const raw = PULSE_RATE_SCALE / rate;
   return Math.round(Math.min(PULSE_DURATION_MAX, Math.max(PULSE_DURATION_MIN, raw)) * 100) / 100;
 };

@@ -7,6 +7,11 @@ describe("pulseDurationFor", () => {
     expect(pulseDurationFor(undefined)).toBe(PULSE_DURATION);
     expect(pulseDurationFor(0)).toBe(PULSE_DURATION);
     expect(pulseDurationFor(-5)).toBe(PULSE_DURATION);
+    expect(pulseDurationFor(Number.NaN)).toBe(PULSE_DURATION);
+  });
+
+  it("clamps an infinite rate to the floor", () => {
+    expect(pulseDurationFor(Number.POSITIVE_INFINITY)).toBe(0.6);
   });
 
   it("maps a rate to a clamped period", () => {
