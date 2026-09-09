@@ -126,6 +126,7 @@ to right; `row` then means column. Default `"right"`.
 | `className`                  | `string`                                               | applied to the scroll viewport                                                    |
 | `fit`                        | `boolean`                                              | scale the canvas down to fit; default `false`                                     |
 | `children`                   | `(node) => ReactNode`                                  | body slot of every card that has one                                              |
+| `edgeState`                  | `Record<string, EdgeState>`                            | live overlay by edge id; never relayouts                                          |
 
 The root is a scroll viewport; size it with `className`. With `fit` the
 canvas scales down to the viewport width (never up).
@@ -134,6 +135,30 @@ canvas scales down to the viewport width (never up).
 (`UNKNOWN_VIEW`, `ROW_OVERFULL`, `NOTHING_TO_RENDER`) for a document it
 cannot draw; wrap `Diagram` in an error boundary if documents are
 user-supplied.
+
+### Live state
+
+`edgeState` flips a hop between live, idle, stale and down without
+touching the document or triggering a relayout. Per edge, with
+`state = edgeState[edge.id]`:
+
+| `state.level` | pulses                                                        | tone       | stroke                           |
+| ------------- | ------------------------------------------------------------- | ---------- | -------------------------------- |
+| absent        | document `animated`                                           | document   | as today                         |
+| `live`        | pulses on; period from `rate` when given, else the edge's own | document   | as today                         |
+| `idle`        | off                                                           | document   | as today                         |
+| `stale`       | off                                                           | `caution`  | as today                         |
+| `down`        | off                                                           | `critical` | dashed (`stroke-dasharray: 5 4`) |
+
+State tone replaces the document's `status` tone while set — a `critical`
+edge marked `stale` shows caution until the state clears.
+
+```tsx
+import { Diagram, type EdgeState } from "@unpunnyfuns/conduit";
+
+const edgeState: Record<string, EdgeState> = { "kafka-to-validator": { level: "down" } };
+<Diagram doc={doc} edgeState={edgeState} />;
+```
 
 ### Layout without React
 

@@ -9,6 +9,7 @@ import {
 } from "../layout/design.js";
 import { coord } from "../layout/geometry.js";
 import type { PlacedEdge } from "../layout/layout.js";
+import { pulseDurationFor, type EdgeLevel, type EdgeState } from "./pulse.js";
 import { STATUSES } from "../schema/primitives.js";
 
 const STROKE: Record<Status, string> = {
@@ -35,6 +36,9 @@ const PILL_TEXT: Record<Status, string> = {
 const PULSE_RADIUS = 2.6;
 const TRAIN_RADIUS = 3;
 
+const toneFor = (level: EdgeLevel | undefined, base: Status): Status =>
+  level === "down" ? "critical" : level === "stale" ? "caution" : base;
+
 /**
  * The travelling pulse: the mark that says a connection carries traffic
  * rather than merely existing. A dot running behind the drawing's clock says
@@ -45,14 +49,15 @@ const Pulses = ({
   path,
   tone,
   hero,
+  duration,
 }: {
   id: string;
   path: string;
   tone: Status;
   hero: boolean;
+  duration: number;
 }) => {
   const count = hero ? HERO_PULSE_COUNT : 1;
-  const duration = hero ? HERO_PULSE_DURATION : PULSE_DURATION;
   return (
     <g data-pulse={id} className="motion-reduce:hidden">
       {Array.from({ length: count }, (_, index) => {
@@ -103,6 +108,7 @@ const Pill = ({
 );
 
 const EMPTY: ReadonlySet<string> = new Set();
+const NO_STATE: Readonly<Record<string, EdgeState>> = {};
 
 export type EdgeLayerProps = {
   width: number;
@@ -115,6 +121,8 @@ export type EdgeLayerProps = {
    */
   emphasisedIds?: ReadonlySet<string>;
   onEdgeClick?: (id: string) => void;
+  /** Live overlay by edge id. Absent ids follow the document; see the mapping in the README. */
+  edgeState?: Readonly<Record<string, EdgeState>>;
 };
 
 /**
@@ -129,6 +137,7 @@ export const EdgeLayer = ({
   dimmedIds,
   emphasisedIds = EMPTY,
   onEdgeClick,
+  edgeState = NO_STATE,
 }: EdgeLayerProps) => {
   const uid = useId().replace(/:/g, "");
   const marker = (tone: Status) => `${uid}-mk-${tone}`;
@@ -159,25 +168,52 @@ export const EdgeLayer = ({
       </defs>
 
       {edges.map(({ edge, path, tone }) => {
+        const state = edgeState[edge.id];
+        const level = state?.level;
+        const liveTone = toneFor(level, tone);
+        const pulsing = level === undefined ? edge.animated : level === "live";
         const heroPulses = edge.emphasis === "hero";
+        const duration =
+          level === "live" && state?.rate !== undefined
+            ? pulseDurationFor(state.rate)
+            : heroPulses
+              ? HERO_PULSE_DURATION
+              : PULSE_DURATION;
         const hero = heroPulses || (emphasisedIds.has(edge.id) && edge.emphasis !== "muted");
         const dimmed = dimmedIds.has(edge.id) || edge.emphasis === "muted";
         return (
           <g
             key={edge.id}
             data-edge-group={edge.id}
+            data-edge-state={level}
             className={cn("transition-opacity", dimmed && "opacity-45")}
           >
             {hero && (
-              <path d={path} className={cn("fill-none stroke-[7] opacity-[0.14]", STROKE[tone])} />
+              <path
+                d={path}
+                className={cn("fill-none stroke-[7] opacity-[0.14]", STROKE[liveTone])}
+              />
             )}
             <path
               data-edge={edge.id}
               d={path}
-              className={cn("fill-none", STROKE[tone], hero ? "stroke-[2.25]" : "stroke-[1.5]")}
-              markerEnd={`url(#${marker(tone)})`}
+              className={cn(
+                "fill-none",
+                STROKE[liveTone],
+                hero ? "stroke-[2.25]" : "stroke-[1.5]",
+                level === "down" && "[stroke-dasharray:5_4]",
+              )}
+              markerEnd={`url(#${marker(liveTone)})`}
             />
-            {edge.animated && <Pulses id={edge.id} path={path} tone={tone} hero={heroPulses} />}
+            {pulsing && (
+              <Pulses
+                id={edge.id}
+                path={path}
+                tone={liveTone}
+                hero={heroPulses}
+                duration={duration}
+              />
+            )}
             {onEdgeClick !== undefined && (
               <path
                 data-edge-hit={edge.id}
@@ -190,11 +226,12 @@ export const EdgeLayer = ({
         );
       })}
 
-      {edges.map(({ edge, label, tone }) =>
-        label === undefined ? null : (
-          <Pill key={`${edge.id}-label`} text={label.text} box={label.box} tone={tone} />
-        ),
-      )}
+      {edges.map(({ edge, label, tone }) => {
+        if (label === undefined) return null;
+        const level = edgeState[edge.id]?.level;
+        const liveTone = toneFor(level, tone);
+        return <Pill key={`${edge.id}-label`} text={label.text} box={label.box} tone={liveTone} />;
+      })}
     </svg>
   );
 };

@@ -1,9 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
+
+vi.mock("../../src/layout/layout.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/layout/layout.js")>();
+  return { ...actual, layout: vi.fn(actual.layout) };
+});
+import { layout } from "../../src/layout/layout.js";
 import { ingress } from "../../example/data/ingress.js";
 import { Diagram } from "../../src/index.js";
-import { layout } from "../../src/layout.js";
 
 describe("Diagram", () => {
   it("renders one card per node, one band per lane and one path per edge", async () => {
@@ -197,5 +202,133 @@ describe("Diagram", () => {
       top("[data-conduit-node='kafka-ingest']"),
       0,
     );
+  });
+
+  it("marks a down edge critical, dashed and unpulsed", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "batch-to-validator": { level: "down" } }} />,
+    );
+    const path = screen.container.querySelector(
+      "path[data-edge='batch-to-validator']",
+    ) as SVGPathElement;
+    expect(getComputedStyle(path).stroke).toBe("rgb(207, 34, 46)");
+    expect(getComputedStyle(path).strokeDasharray).toBe("5px, 4px");
+    expect(
+      screen.container.querySelectorAll("[data-pulse='batch-to-validator'] animateMotion").length,
+    ).toBe(0);
+  });
+
+  it("state overrides the document's status but muted still dims", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "batch-to-legacy": { level: "stale" } }} />,
+    );
+    const path = screen.container.querySelector(
+      "path[data-edge='batch-to-legacy']",
+    ) as SVGPathElement;
+    const group = screen.container.querySelector("g[data-edge-group='batch-to-legacy']") as Element;
+    expect(getComputedStyle(path).stroke).toBe("rgb(191, 135, 0)");
+    expect(Number(getComputedStyle(group).opacity)).toBeLessThan(1);
+  });
+
+  it("colours a down edge's pill with the critical text tone", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "lake-to-warehouse": { level: "down" } }} />,
+    );
+    const pill = screen.getByText("dbt").element();
+    expect(getComputedStyle(pill).fill).toBe("rgb(164, 14, 38)");
+  });
+
+  it("pulses a live edge at a rate-derived period even when the document is static", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "sftp-to-batch": { level: "live", rate: 1000 } }} />,
+    );
+    const motions = screen.container.querySelectorAll("[data-pulse='sftp-to-batch'] animateMotion");
+    expect(motions.length).toBe(1);
+    expect(motions[0]?.getAttribute("dur")).toBe("0.6s");
+  });
+
+  it("runs a live hero train at the rate period", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "kafka-to-validator": { level: "live", rate: 1000 } }} />,
+    );
+    const motions = screen.container.querySelectorAll(
+      "[data-pulse='kafka-to-validator'] animateMotion",
+    );
+    expect(motions.length).toBe(3);
+    for (const motion of motions) {
+      expect(motion.getAttribute("dur")).toBe("0.6s");
+    }
+  });
+
+  it("keeps a hero edge's own train period when live without a rate", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "kafka-to-validator": { level: "live" } }} />,
+    );
+    const motions = screen.container.querySelectorAll(
+      "[data-pulse='kafka-to-validator'] animateMotion",
+    );
+    expect(motions.length).toBe(3);
+    for (const motion of motions) {
+      expect(motion.getAttribute("dur")).toBe("2.1s");
+    }
+  });
+
+  it("keeps a plain edge's default period when live without a rate", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "sftp-to-batch": { level: "live" } }} />,
+    );
+    const motions = screen.container.querySelectorAll("[data-pulse='sftp-to-batch'] animateMotion");
+    expect(motions.length).toBe(1);
+    expect(motions[0]?.getAttribute("dur")).toBe("1.6s");
+  });
+
+  it("silences an animated edge marked idle", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "partner-to-kafka": { level: "idle" } }} />,
+    );
+    expect(
+      screen.container.querySelectorAll("[data-pulse='partner-to-kafka'] animateMotion").length,
+    ).toBe(0);
+  });
+
+  it("turns a stale hero edge caution and stops its train", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "kafka-to-validator": { level: "stale" } }} />,
+    );
+    const path = screen.container.querySelector(
+      "path[data-edge='kafka-to-validator']",
+    ) as SVGPathElement;
+    expect(getComputedStyle(path).stroke).toBe("rgb(191, 135, 0)");
+    expect(
+      screen.container.querySelectorAll("[data-pulse='kafka-to-validator'] animateMotion").length,
+    ).toBe(0);
+  });
+
+  it("does not relayout when edge state changes", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "partner-to-kafka": { level: "live", rate: 50 } }} />,
+    );
+    const card = () =>
+      (
+        screen.container.querySelector("[data-conduit-node='warehouse']") as HTMLElement
+      ).getBoundingClientRect();
+    const canvas = () =>
+      (
+        screen.container.querySelector("[data-conduit-canvas]") as HTMLElement
+      ).getBoundingClientRect().width;
+    const before = { card: card(), canvas: canvas() };
+    vi.mocked(layout).mockClear();
+    await screen.rerender(
+      <Diagram
+        doc={ingress}
+        edgeState={{
+          "partner-to-kafka": { level: "down" },
+          "lake-to-warehouse": { level: "stale" },
+        }}
+      />,
+    );
+    expect(vi.mocked(layout)).not.toHaveBeenCalled();
+    expect(card()).toEqual(before.card);
+    expect(canvas()).toBe(before.canvas);
   });
 });

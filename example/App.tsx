@@ -1,5 +1,5 @@
-import { Diagram, type Highlight } from "@unpunnyfuns/conduit";
-import { useMemo, useState } from "react";
+import { Diagram, type EdgeState, type Highlight } from "@unpunnyfuns/conduit";
+import { useEffect, useMemo, useState } from "react";
 import { ingress } from "./data/ingress.js";
 import { Sparkline } from "./Sparkline.js";
 
@@ -19,9 +19,35 @@ export const App = () => {
   const [view, setView] = useState<string | undefined>(undefined);
   const [selected, setSelected] = useState<string[]>([]);
   const [log, setLog] = useState<string[]>([]);
+  const [outage, setOutage] = useState(false);
+  const [rate, setRate] = useState(50);
 
   const note = (entry: string) => setLog((previous) => [entry, ...previous].slice(0, 20));
   const doc = useMemo(() => ({ ...ingress, direction }), [direction]);
+
+  useEffect(() => {
+    if (!outage) return;
+    const rates = [50, 200, 800, 2000] as const;
+    let index = 0;
+    const timer = setInterval(() => {
+      index = (index + 1) % rates.length;
+      setRate(rates[index] ?? rates[0]);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [outage]);
+
+  const edgeState = useMemo<Record<string, EdgeState> | undefined>(
+    () =>
+      outage
+        ? {
+            "batch-to-validator": { level: "down" },
+            "sftp-to-batch": { level: "stale" },
+            "partner-to-kafka": { level: "live", rate },
+            "webhooks-to-kafka": { level: "idle" },
+          }
+        : undefined,
+    [outage, rate],
+  );
 
   return (
     <div className={dark ? "dark" : undefined}>
@@ -74,6 +100,13 @@ export const App = () => {
             <option value="downstream">Downstream</option>
             <option value="both">Both</option>
           </select>
+          <button
+            type="button"
+            className="rounded border border-conduit-card-border px-2 py-1 text-sm"
+            onClick={() => setOutage((value) => !value)}
+          >
+            {outage ? "Recover" : "Simulate outage"}
+          </button>
           {selected.length > 0 && (
             <button type="button" className="text-sm underline" onClick={() => setSelected([])}>
               Clear selection
@@ -88,6 +121,7 @@ export const App = () => {
             selected={selected}
             highlight={highlight}
             fit={fit}
+            edgeState={edgeState}
             className="max-h-[70vh]"
             onNodeClick={(id) => {
               setSelected((previous) => (previous.includes(id) ? [] : [id]));

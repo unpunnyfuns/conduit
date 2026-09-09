@@ -97,6 +97,11 @@ export const PULSE_DURATION = 1.6;
 export const HERO_PULSE_DURATION = 2.1;
 export const HERO_PULSE_COUNT = 3;
 
+/** Live edges: seconds per pulse ≈ PULSE_RATE_SCALE / rate, clamped so 10/s and 10k/s both read as traffic. */
+export const PULSE_RATE_SCALE = 160;
+export const PULSE_DURATION_MIN = 0.6;
+export const PULSE_DURATION_MAX = 3;
+
 /** Card heights by declared size. `chart` reserves a body slot under the header. */
 export type CardHeights = { compact: number; withSubtitle: number; chart: number };
 export const DEFAULT_CARD_HEIGHTS: CardHeights = { compact: 52, withSubtitle: 62, chart: 140 };
