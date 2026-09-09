@@ -44,6 +44,7 @@ export const App = () => {
             "sftp-to-batch": { level: "stale" },
             "partner-to-kafka": { level: "live", rate },
             "webhooks-to-kafka": { level: "idle" },
+            "lake-to-warehouse": { level: "done" },
           }
         : undefined,
     [outage, rate],

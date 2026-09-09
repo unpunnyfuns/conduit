@@ -138,7 +138,7 @@ user-supplied.
 
 ### Live state
 
-`edgeState` flips a hop between live, idle, stale and down without
+`edgeState` flips a hop between live, idle, done, stale and down without
 touching the document or triggering a relayout. Per edge, with
 `state = edgeState[edge.id]`:
 
@@ -147,6 +147,7 @@ touching the document or triggering a relayout. Per edge, with
 | absent        | document `animated`                                           | document   | as today                         |
 | `live`        | pulses on; period from `rate` when given, else the edge's own | document   | as today                         |
 | `idle`        | off                                                           | document   | as today                         |
+| `done`        | off                                                           | `positive` | as today                         |
 | `stale`       | off                                                           | `caution`  | as today                         |
 | `down`        | off                                                           | `critical` | dashed (`stroke-dasharray: 5 4`) |
 

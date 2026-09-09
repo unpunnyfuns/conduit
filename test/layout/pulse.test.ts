@@ -23,7 +23,7 @@ describe("pulseDurationFor", () => {
 });
 
 describe("EDGE_LEVELS", () => {
-  it("lists the four levels in order", () => {
-    expect(EDGE_LEVELS).toEqual(["live", "idle", "stale", "down"]);
+  it("lists the five levels in order", () => {
+    expect(EDGE_LEVELS).toEqual(["live", "idle", "done", "stale", "down"]);
   });
 });

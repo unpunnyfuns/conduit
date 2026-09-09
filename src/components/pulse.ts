@@ -5,10 +5,14 @@ import {
   PULSE_RATE_SCALE,
 } from "../layout/design.js";
 
-/** What a hop is doing right now, as the app sees it. Absent means "whatever the document says". */
-export type EdgeLevel = "live" | "idle" | "stale" | "down";
+/**
+ * What a hop is doing right now, as the app sees it. Absent means "whatever
+ * the document says". `done` is a hop that completed — a batch that ran —
+ * as opposed to `idle`, which never started, and `stale`, which should have.
+ */
+export type EdgeLevel = "live" | "idle" | "done" | "stale" | "down";
 
-export const EDGE_LEVELS: readonly EdgeLevel[] = ["live", "idle", "stale", "down"];
+export const EDGE_LEVELS: readonly EdgeLevel[] = ["live", "idle", "done", "stale", "down"];
 
 export type EdgeState = {
   level: EdgeLevel;

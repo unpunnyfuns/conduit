@@ -36,8 +36,18 @@ const PILL_TEXT: Record<Status, string> = {
 const PULSE_RADIUS = 2.6;
 const TRAIN_RADIUS = 3;
 
-const toneFor = (level: EdgeLevel | undefined, base: Status): Status =>
-  level === "down" ? "critical" : level === "stale" ? "caution" : base;
+const toneFor = (level: EdgeLevel | undefined, base: Status): Status => {
+  switch (level) {
+    case "down":
+      return "critical";
+    case "stale":
+      return "caution";
+    case "done":
+      return "positive";
+    default:
+      return base;
+  }
+};
 
 /**
  * The travelling pulse: the mark that says a connection carries traffic

@@ -2,7 +2,7 @@
 
 Date: 2026-09-09. Extends the conduit specs of 2026-09-08.
 
-A per-edge live-state overlay so an app can flip a hop between live, idle, stale and down without touching the document or triggering a relayout.
+A per-edge live-state overlay so an app can flip a hop between live, idle, done, stale and down without touching the document or triggering a relayout.
 
 ## Goals
 
@@ -43,6 +43,7 @@ Per edge, with `state = edgeState[edge.id]`:
 | absent | document `animated` | document | as today |
 | `live` | on, `dur = pulseDurationFor(rate)` | document | as today |
 | `idle` | off | document | as today |
+| `done` | off | `positive` | as today |
 | `stale` | off | `caution` | as today |
 | `down` | off | `critical` | dashed (`stroke-dasharray: 5 4`) |
 

@@ -291,6 +291,20 @@ describe("Diagram", () => {
     ).toBe(0);
   });
 
+  it("marks a done edge positive and unpulsed", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "partner-to-kafka": { level: "done" } }} />,
+    );
+    const path = screen.container.querySelector(
+      "path[data-edge='partner-to-kafka']",
+    ) as SVGPathElement;
+    expect(getComputedStyle(path).stroke).toBe("rgb(31, 136, 61)");
+    expect(getComputedStyle(path).strokeDasharray).toBe("none");
+    expect(
+      screen.container.querySelectorAll("[data-pulse='partner-to-kafka'] animateMotion").length,
+    ).toBe(0);
+  });
+
   it("turns a stale hero edge caution and stops its train", async () => {
     const screen = await render(
       <Diagram doc={ingress} edgeState={{ "kafka-to-validator": { level: "stale" } }} />,
