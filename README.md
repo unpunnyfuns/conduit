@@ -154,6 +154,10 @@ const traced = traceFrom(doc.edges, ["warehouse"], "upstream");
 const litNodeIds = [...traced.nodes];
 ```
 
+`traceFrom` walks whatever edge list you give it — pass `doc.edges` for the whole
+document, or the `edges` from a `layout()` call to match a view's scope, which is
+what `Diagram` does.
+
 ## Development
 
 ```bash
