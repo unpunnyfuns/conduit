@@ -67,4 +67,21 @@ describe("example app", () => {
       .poll(() => opacity("[data-conduit-node='partner-api']"), { timeout: 2000 })
       .toBe(1);
   });
+
+  it("simulates an outage and recovers", async () => {
+    const screen = await render(<App />);
+    await screen.getByRole("button", { name: "Simulate outage" }).click();
+    const path = () =>
+      screen.container.querySelector("path[data-edge='batch-to-validator']") as SVGPathElement;
+    await expect
+      .poll(() => getComputedStyle(path()).stroke, { timeout: 2000 })
+      .toBe("rgb(207, 34, 46)");
+    expect(
+      screen.container.querySelectorAll("[data-pulse='webhooks-to-kafka'] animateMotion").length,
+    ).toBe(0);
+    await screen.getByRole("button", { name: "Recover" }).click();
+    await expect
+      .poll(() => getComputedStyle(path()).stroke, { timeout: 2000 })
+      .toBe("rgb(140, 149, 159)");
+  });
 });
