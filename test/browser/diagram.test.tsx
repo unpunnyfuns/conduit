@@ -1,9 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
+
+vi.mock("../../src/layout/layout.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/layout/layout.js")>();
+  return { ...actual, layout: vi.fn(actual.layout) };
+});
+import { layout } from "../../src/layout/layout.js";
 import { ingress } from "../../example/data/ingress.js";
 import { Diagram } from "../../src/index.js";
-import { layout } from "../../src/layout.js";
 
 describe("Diagram", () => {
   it("renders one card per node, one band per lane and one path per edge", async () => {
@@ -300,6 +305,7 @@ describe("Diagram", () => {
         screen.container.querySelector("[data-conduit-canvas]") as HTMLElement
       ).getBoundingClientRect().width;
     const before = { card: card(), canvas: canvas() };
+    vi.mocked(layout).mockClear();
     await screen.rerender(
       <Diagram
         doc={ingress}
@@ -309,6 +315,7 @@ describe("Diagram", () => {
         }}
       />,
     );
+    expect(vi.mocked(layout)).not.toHaveBeenCalled();
     expect(card()).toEqual(before.card);
     expect(canvas()).toBe(before.canvas);
   });
