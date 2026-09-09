@@ -19,5 +19,11 @@ export { Diagram, type DiagramProps } from "./components/Diagram.js";
 export { Card, type CardProps } from "./components/Card.js";
 export { LaneBand, type LaneBandProps } from "./components/Lane.js";
 export { EdgeLayer, type EdgeLayerProps } from "./components/EdgeLayer.js";
+export {
+  EDGE_LEVELS,
+  pulseDurationFor,
+  type EdgeLevel,
+  type EdgeState,
+} from "./components/pulse.js";
 export { Badge } from "./components/Badge.js";
 export { KindIcon } from "./components/icons.js";

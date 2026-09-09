@@ -7,6 +7,7 @@ import { traceFrom, type Highlight } from "../layout/trace.js";
 import { Card } from "./Card.js";
 import { EdgeLayer } from "./EdgeLayer.js";
 import { LaneBand } from "./Lane.js";
+import type { EdgeState } from "./pulse.js";
 
 export type DiagramProps = {
   doc: ConduitDocument;
@@ -25,6 +26,8 @@ export type DiagramProps = {
   fit?: boolean;
   /** Fills the body slot of every card that has one. */
   children?: (node: ConduitNode) => ReactNode;
+  /** Live overlay by edge id; changes never relayout. */
+  edgeState?: Readonly<Record<string, EdgeState>>;
 };
 
 const headerHeightOf = (node: ConduitNode, heights: CardHeights): number =>
@@ -51,6 +54,7 @@ export const Diagram = ({
   className,
   fit = false,
   children,
+  edgeState,
 }: DiagramProps) => {
   // Deps are the scalars, not `cardHeights` itself: a caller passing a fresh
   // object literal every render must not defeat the memo below it.
@@ -164,6 +168,7 @@ export const Diagram = ({
           dimmedIds={dimmedEdges}
           emphasisedIds={emphasised}
           onEdgeClick={onEdgeClick}
+          edgeState={edgeState}
         />
 
         {laid.nodes.map(({ node, box }) => {

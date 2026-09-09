@@ -198,4 +198,83 @@ describe("Diagram", () => {
       0,
     );
   });
+
+  it("marks a down edge critical, dashed and unpulsed", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "batch-to-validator": { level: "down" } }} />,
+    );
+    const path = screen.container.querySelector(
+      "path[data-edge='batch-to-validator']",
+    ) as SVGPathElement;
+    expect(getComputedStyle(path).stroke).toBe("rgb(207, 34, 46)");
+    expect(getComputedStyle(path).strokeDasharray).not.toBe("none");
+    expect(
+      screen.container.querySelectorAll("[data-pulse='batch-to-validator'] animateMotion").length,
+    ).toBe(0);
+  });
+
+  it("colours a down edge's pill with the critical text tone", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "lake-to-warehouse": { level: "down" } }} />,
+    );
+    const pill = screen.getByText("dbt").element();
+    expect(getComputedStyle(pill).fill).toBe("rgb(164, 14, 38)");
+  });
+
+  it("pulses a live edge at a rate-derived period even when the document is static", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "sftp-to-batch": { level: "live", rate: 1000 } }} />,
+    );
+    const motions = screen.container.querySelectorAll("[data-pulse='sftp-to-batch'] animateMotion");
+    expect(motions.length).toBe(1);
+    expect(motions[0]?.getAttribute("dur")).toBe("0.6s");
+  });
+
+  it("silences an animated edge marked idle", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "partner-to-kafka": { level: "idle" } }} />,
+    );
+    expect(
+      screen.container.querySelectorAll("[data-pulse='partner-to-kafka'] animateMotion").length,
+    ).toBe(0);
+  });
+
+  it("turns a stale hero edge caution and stops its train", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "kafka-to-validator": { level: "stale" } }} />,
+    );
+    const path = screen.container.querySelector(
+      "path[data-edge='kafka-to-validator']",
+    ) as SVGPathElement;
+    expect(getComputedStyle(path).stroke).toBe("rgb(191, 135, 0)");
+    expect(
+      screen.container.querySelectorAll("[data-pulse='kafka-to-validator'] animateMotion").length,
+    ).toBe(0);
+  });
+
+  it("does not relayout when edge state changes", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "partner-to-kafka": { level: "live", rate: 50 } }} />,
+    );
+    const card = () =>
+      (
+        screen.container.querySelector("[data-conduit-node='warehouse']") as HTMLElement
+      ).getBoundingClientRect();
+    const canvas = () =>
+      (
+        screen.container.querySelector("[data-conduit-canvas]") as HTMLElement
+      ).getBoundingClientRect().width;
+    const before = { card: card(), canvas: canvas() };
+    await screen.rerender(
+      <Diagram
+        doc={ingress}
+        edgeState={{
+          "partner-to-kafka": { level: "down" },
+          "lake-to-warehouse": { level: "stale" },
+        }}
+      />,
+    );
+    expect(card()).toEqual(before.card);
+    expect(canvas()).toBe(before.canvas);
+  });
 });
