@@ -230,6 +230,19 @@ describe("Diagram", () => {
     expect(motions[0]?.getAttribute("dur")).toBe("0.6s");
   });
 
+  it("runs a live hero train at the rate period", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} edgeState={{ "kafka-to-validator": { level: "live", rate: 1000 } }} />,
+    );
+    const motions = screen.container.querySelectorAll(
+      "[data-pulse='kafka-to-validator'] animateMotion",
+    );
+    expect(motions.length).toBe(3);
+    for (const motion of motions) {
+      expect(motion.getAttribute("dur")).toBe("0.6s");
+    }
+  });
+
   it("silences an animated edge marked idle", async () => {
     const screen = await render(
       <Diagram doc={ingress} edgeState={{ "partner-to-kafka": { level: "idle" } }} />,

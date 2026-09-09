@@ -9,7 +9,7 @@ import {
 } from "../layout/design.js";
 import { coord } from "../layout/geometry.js";
 import type { PlacedEdge } from "../layout/layout.js";
-import { pulseDurationFor, type EdgeState } from "./pulse.js";
+import { pulseDurationFor, type EdgeLevel, type EdgeState } from "./pulse.js";
 import { STATUSES } from "../schema/primitives.js";
 
 const STROKE: Record<Status, string> = {
@@ -35,6 +35,9 @@ const PILL_TEXT: Record<Status, string> = {
 
 const PULSE_RADIUS = 2.6;
 const TRAIN_RADIUS = 3;
+
+const toneFor = (level: EdgeLevel | undefined, base: Status): Status =>
+  level === "down" ? "critical" : level === "stale" ? "caution" : base;
 
 /**
  * The travelling pulse: the mark that says a connection carries traffic
@@ -167,8 +170,7 @@ export const EdgeLayer = ({
       {edges.map(({ edge, path, tone }) => {
         const state = edgeState[edge.id];
         const level = state?.level;
-        const liveTone: Status =
-          level === "down" ? "critical" : level === "stale" ? "caution" : tone;
+        const liveTone = toneFor(level, tone);
         const pulsing = level === undefined ? edge.animated : level === "live";
         const heroPulses = edge.emphasis === "hero";
         const duration =
@@ -226,8 +228,7 @@ export const EdgeLayer = ({
       {edges.map(({ edge, label, tone }) => {
         if (label === undefined) return null;
         const level = edgeState[edge.id]?.level;
-        const liveTone: Status =
-          level === "down" ? "critical" : level === "stale" ? "caution" : tone;
+        const liveTone = toneFor(level, tone);
         return <Pill key={`${edge.id}-label`} text={label.text} box={label.box} tone={liveTone} />;
       })}
     </svg>
