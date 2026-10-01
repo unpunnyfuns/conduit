@@ -30,10 +30,14 @@ export const Popover = ({ anchor, canvas, labelledBy, onClose, children }: Popov
   if (previousFocusRef.current === null) previousFocusRef.current = document.activeElement;
   const hasFocusedRef = useRef(false);
 
+  // Re-measures after every render; setHeight bails out when the value is
+  // unchanged, so this stays cheap while picking up content/anchor changes
+  // without having to track them as explicit effect dependencies.
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     const node = ref.current;
     if (node !== null) setHeight(node.offsetHeight);
-  }, [children, anchor]);
+  });
 
   useLayoutEffect(() => {
     if (height !== undefined && !hasFocusedRef.current) {
