@@ -4,6 +4,7 @@ import { ingress } from "../../example/data/ingress.js";
 import { EdgeDetail } from "../../src/components/detail/EdgeDetail.js";
 import { NodeDetail } from "../../src/components/detail/NodeDetail.js";
 import { Popover } from "../../src/components/detail/Popover.js";
+import { parseDocument } from "../../src/index.js";
 
 const canvas = { width: 800, height: 600 };
 const anchor = { x: 40, y: 40, width: 200, height: 52 };
@@ -172,6 +173,34 @@ describe("NodeDetail", () => {
     );
     expect(screen.container.textContent).not.toContain("Receives from");
     expect(screen.container.textContent).toContain("Sends to");
+  });
+
+  it("lists parallel edges to the same neighbour separately", async () => {
+    const errorSpy = vi.spyOn(console, "error");
+    const doc = parseDocument({
+      version: 1,
+      title: "Parallel edges",
+      lanes: [{ id: "lane", label: "Lane" }],
+      nodes: [
+        { id: "a", label: "A", kind: "service", lane: "lane" },
+        { id: "b", label: "B", kind: "service", lane: "lane" },
+      ],
+      edges: [
+        { id: "one", from: "a", to: "b", kind: "call" },
+        { id: "two", from: "a", to: "b", kind: "call" },
+      ],
+    });
+    const a = doc.nodes.find((n) => n.id === "a")!;
+    const docLabelOf = (id: string) => doc.nodes.find((n) => n.id === id)?.label ?? id;
+    const screen = await render(
+      <NodeDetail node={a} edges={doc.edges} labelOf={docLabelOf} titleId="t" />,
+    );
+    await expect.element(screen.getByText("Sends to")).toBeVisible();
+    expect(screen.getByText("B").elements().length).toBe(2);
+    for (const call of errorSpy.mock.calls) {
+      expect(call.join(" ")).not.toContain("key");
+    }
+    errorSpy.mockRestore();
   });
 });
 

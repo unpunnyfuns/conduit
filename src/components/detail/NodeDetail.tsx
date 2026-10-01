@@ -18,7 +18,7 @@ const Connections = ({
   onSelect,
 }: {
   heading: string;
-  entries: readonly { id: string; label: string; via: string }[];
+  entries: readonly { edgeId: string; id: string; label: string; via: string }[];
   onSelect?: (id: string) => void;
 }) =>
   entries.length === 0 ? null : (
@@ -28,10 +28,7 @@ const Connections = ({
       </div>
       <ul className="mt-1 flex flex-col gap-0.5">
         {entries.map((entry) => (
-          <li
-            key={`${entry.id}-${entry.via}`}
-            className="flex items-baseline justify-between gap-2 text-[12px]"
-          >
+          <li key={entry.edgeId} className="flex items-baseline justify-between gap-2 text-[12px]">
             {onSelect === undefined ? (
               <span>{entry.label}</span>
             ) : (
@@ -63,10 +60,10 @@ export const NodeDetail = ({
 }: NodeDetailProps) => {
   const incoming = edges
     .filter((edge) => edge.to === node.id && edge.from !== node.id)
-    .map((edge) => ({ id: edge.from, label: labelOf(edge.from), via: via(edge) }));
+    .map((edge) => ({ edgeId: edge.id, id: edge.from, label: labelOf(edge.from), via: via(edge) }));
   const outgoing = edges
     .filter((edge) => edge.from === node.id && edge.to !== node.id)
-    .map((edge) => ({ id: edge.to, label: labelOf(edge.to), via: via(edge) }));
+    .map((edge) => ({ edgeId: edge.id, id: edge.to, label: labelOf(edge.to), via: via(edge) }));
 
   return (
     <div>
