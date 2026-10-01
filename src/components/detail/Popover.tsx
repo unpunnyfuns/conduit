@@ -1,0 +1,75 @@
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import type { Box } from "../../layout/geometry.js";
+import { placePopover, POPOVER_WIDTH, type Size } from "./place.js";
+
+export type PopoverProps = {
+  anchor: Box;
+  canvas: Size;
+  /** Id of the element inside that names this dialog. */
+  labelledBy: string;
+  onClose: () => void;
+  children: ReactNode;
+};
+
+const isOwnTarget = (target: EventTarget | null): boolean =>
+  target instanceof Element &&
+  target.closest("[data-conduit-node], [data-edge-hit], [data-conduit-popover]") !== null;
+
+/**
+ * A dialog pinned inside the canvas beside its anchor, so it scrolls and
+ * scales with the drawing. It measures itself once mounted to pick a side
+ * that fits; until then it is laid out but invisible.
+ */
+export const Popover = ({ anchor, canvas, labelledBy, onClose, children }: PopoverProps) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+  const previousFocusRef = useRef<Element | null>(null);
+  if (previousFocusRef.current === null) previousFocusRef.current = document.activeElement;
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (node !== null) setHeight(node.offsetHeight);
+  }, [children, anchor]);
+
+  useLayoutEffect(() => {
+    if (height !== undefined) ref.current?.focus();
+  }, [height]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    const onDown = (event: MouseEvent) => {
+      if (!isOwnTarget(event.target)) onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
+      const previous = previousFocusRef.current;
+      if (previous instanceof HTMLElement) previous.focus();
+    };
+  }, [onClose]);
+
+  const box = placePopover(anchor, { width: POPOVER_WIDTH, height: height ?? 0 }, canvas);
+
+  return (
+    <div
+      ref={ref}
+      role="dialog"
+      aria-labelledby={labelledBy}
+      tabIndex={-1}
+      data-conduit-popover
+      className="absolute z-10 rounded-[10px] border border-conduit-card-border bg-conduit-card p-[14px] text-conduit-fg shadow-[0_4px_12px_var(--color-conduit-shadow)] outline-none"
+      style={{
+        left: box.x,
+        top: box.y,
+        width: POPOVER_WIDTH,
+        visibility: height === undefined ? "hidden" : "visible",
+      }}
+    >
+      {children}
+    </div>
+  );
+};
