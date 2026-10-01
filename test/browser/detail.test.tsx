@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
+import { ingress } from "../../example/data/ingress.js";
+import { EdgeDetail } from "../../src/components/detail/EdgeDetail.js";
+import { NodeDetail } from "../../src/components/detail/NodeDetail.js";
 import { Popover } from "../../src/components/detail/Popover.js";
 
 const canvas = { width: 800, height: 600 };
@@ -121,5 +124,75 @@ describe("Popover", () => {
       </div>,
     );
     await expect.poll(() => document.activeElement?.getAttribute("data-testid")).toBe("inner");
+  });
+});
+
+const labelOf = (id: string) => ingress.nodes.find((n) => n.id === id)?.label ?? id;
+
+describe("NodeDetail", () => {
+  const warehouse = ingress.nodes.find((n) => n.id === "warehouse")!;
+
+  it("shows title, summary and connections", async () => {
+    const screen = await render(
+      <NodeDetail
+        node={{ ...warehouse, summary: "Nightly dbt models." }}
+        edges={ingress.edges}
+        labelOf={labelOf}
+        titleId="t"
+      />,
+    );
+    await expect.element(screen.getByRole("heading", { name: "Warehouse" })).toBeVisible();
+    await expect.element(screen.getByText("Nightly dbt models.")).toBeVisible();
+    await expect.element(screen.getByText("Receives from")).toBeVisible();
+    await expect.element(screen.getByText("Raw lake")).toBeVisible();
+    await expect.element(screen.getByText("Sends to")).toBeVisible();
+    await expect.element(screen.getByText("Analytics UI")).toBeVisible();
+    await expect.element(screen.getByText("Reporting job")).toBeVisible();
+  });
+
+  it("reports a neighbour selection", async () => {
+    const onSelect = vi.fn();
+    const screen = await render(
+      <NodeDetail
+        node={warehouse}
+        edges={ingress.edges}
+        labelOf={labelOf}
+        titleId="t"
+        onSelect={onSelect}
+      />,
+    );
+    await screen.getByRole("button", { name: /Raw lake/ }).click();
+    expect(onSelect).toHaveBeenCalledWith("raw-lake");
+  });
+
+  it("omits empty sections", async () => {
+    const source = ingress.nodes.find((n) => n.id === "partner-api")!;
+    const screen = await render(
+      <NodeDetail node={source} edges={ingress.edges} labelOf={labelOf} titleId="t" />,
+    );
+    expect(screen.container.textContent).not.toContain("Receives from");
+    expect(screen.container.textContent).toContain("Sends to");
+  });
+});
+
+describe("EdgeDetail", () => {
+  const edge = ingress.edges.find((e) => e.id === "lake-to-warehouse")!;
+
+  it("shows endpoints, kind, label and state", async () => {
+    const screen = await render(
+      <EdgeDetail
+        edge={edge}
+        fromLabel="Raw lake"
+        toLabel="Warehouse"
+        titleId="t"
+        state={{ level: "stale" }}
+      />,
+    );
+    await expect
+      .element(screen.getByRole("heading", { name: "Raw lake → Warehouse" }))
+      .toBeVisible();
+    expect(screen.container.textContent).toContain("data");
+    expect(screen.container.textContent).toContain("dbt");
+    expect(screen.container.textContent).toContain("State: stale");
   });
 });
