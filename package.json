@@ -1,6 +1,6 @@
 {
   "name": "@unpunnyfuns/conduit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lane-based architecture diagrams for React, with live content in every card.",
   "keywords": [
     "architecture",
