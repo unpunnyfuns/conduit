@@ -333,6 +333,7 @@ describe("Diagram detail", () => {
       .getByRole("button", { name: /Raw lake/ })
       .click();
     await expect.element(screen.getByRole("dialog", { name: "Raw lake" })).toBeVisible();
+    await expect.poll(() => document.activeElement?.getAttribute("role")).toBe("dialog");
   });
 
   it("is controllable", async () => {

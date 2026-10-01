@@ -260,6 +260,7 @@ export const Diagram = ({
 
         {detailNode !== undefined && (
           <Popover
+            key={detailId}
             anchor={detailNode.box}
             canvas={{ width: laid.width, height: laid.height }}
             labelledBy={titleId}
@@ -278,6 +279,7 @@ export const Diagram = ({
         )}
         {detailEdge !== undefined && (
           <Popover
+            key={detailId}
             anchor={
               detailEdge.label?.box ??
               laid.atlas.edges[detailEdge.edge.id] ?? { x: 0, y: 0, width: 0, height: 0 }
