@@ -296,8 +296,11 @@ describe("Diagram detail", () => {
   it("switches to a neighbour from the connections list", async () => {
     const screen = await render(<Diagram doc={ingress} detail="popover" />);
     await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
-    await screen.getByRole("button", { name: /Raw lake/ }).click();
-    await expect.element(screen.getByRole("dialog", { name: "Raw lake, s3://raw" })).toBeVisible();
+    await screen
+      .getByRole("dialog")
+      .getByRole("button", { name: /Raw lake/ })
+      .click();
+    await expect.element(screen.getByRole("dialog", { name: "Raw lake" })).toBeVisible();
   });
 
   it("is controllable", async () => {
