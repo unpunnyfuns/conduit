@@ -161,6 +161,41 @@ const edgeState: Record<string, EdgeState> = { "kafka-to-validator": { level: "d
 <Diagram doc={doc} edgeState={edgeState} />;
 ```
 
+### Details
+
+| Prop             | Type                                  | Notes                                                  |
+| ---------------- | ------------------------------------- | ------------------------------------------------------ |
+| `detail`         | `"popover" \| "none"`                 | show a popover with the clicked node or edge's summary |
+| `detailFor`      | `string`                              | controlled detail target (a node or edge id)           |
+| `onDetailChange` | `(id: string \| undefined) => void`   | fires on every open/close, controlled or not           |
+| `renderDetail`   | `(target: DetailTarget) => ReactNode` | extra content appended inside the detail               |
+
+`DetailTarget` is `{ kind: "node"; node } | { kind: "edge"; edge }`.
+`detail="popover"` opens a `Popover` positioned beside the clicked card or
+edge label by `placePopover`, a pure function of the anchor box and the
+canvas size. Clicking a card toggles its popover; `onNodeClick`/`onEdgeClick`
+still fire.
+
+`Popover`, `placePopover`, `NodeDetail` and `EdgeDetail` are exported
+separately for apps that want their own panel instead of (or alongside) the
+popover — for example a side panel driven by the same click state `Diagram`
+uses internally:
+
+```tsx
+import { Diagram, NodeDetail, type ConduitNode } from "@unpunnyfuns/conduit";
+import { useId, useState } from "react";
+
+const [node, setNode] = useState<ConduitNode | undefined>(undefined);
+const titleId = useId();
+
+<div className="flex gap-6">
+  <Diagram doc={doc} onNodeClick={(id) => setNode(doc.nodes.find((n) => n.id === id))} />
+  {node !== undefined && (
+    <NodeDetail node={node} edges={doc.edges} labelOf={(id) => id} titleId={titleId} />
+  )}
+</div>;
+```
+
 ### Layout without React
 
 ```ts

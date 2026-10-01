@@ -18,6 +18,12 @@ describe("example app", () => {
     await expect.element(screen.getByRole("button", { name: "Clear selection" })).toBeVisible();
   });
 
+  it("shows a popover with the owner on node click", async () => {
+    const screen = await render(<App />);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.element(screen.getByText("Owner: data-platform")).toBeVisible();
+  });
+
   it("toggles direction", async () => {
     const screen = await render(<App />);
     const before = (

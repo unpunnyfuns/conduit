@@ -124,6 +124,12 @@ export const App = () => {
             fit={fit}
             edgeState={edgeState}
             className="max-h-[70vh]"
+            detail="popover"
+            renderDetail={(target) =>
+              target.kind === "node" ? (
+                <div className="mt-3 text-[11px] text-conduit-muted">Owner: data-platform</div>
+              ) : null
+            }
             onNodeClick={(id) => {
               setSelected((previous) => (previous.includes(id) ? [] : [id]));
               note(`node ${id}`);
