@@ -35,7 +35,7 @@ export type DiagramProps = {
   edgeState?: Readonly<Record<string, EdgeState>>;
   /** Show a popover with the clicked element's summary and connections. */
   detail?: "popover" | "none";
-  /** Controlled detail target (node or edge id). */
+  /** Controlled detail target (node or edge id). `undefined` means closed; a parent that stores the id from `onDetailChange` gets a normal open/close cycle. */
   detailFor?: string;
   onDetailChange?: (id: string | undefined) => void;
   /** Extra content appended inside the detail. */
@@ -136,13 +136,29 @@ export const Diagram = ({
   const detailId = detail === "popover" ? (detailFor ?? internalDetail) : undefined;
   const setDetail = useCallback(
     (id: string | undefined) => {
-      if (detailFor === undefined) setInternalDetail(id);
+      setInternalDetail(id);
       onDetailChange?.(id);
     },
-    [detailFor, onDetailChange],
+    [onDetailChange],
   );
   const closeDetail = useCallback(() => setDetail(undefined), [setDetail]);
   const titleId = useId();
+
+  // A stale target (detail turned off and back on, or scoped out by a view
+  // change) must not re-open on its own when it next becomes reachable.
+  useEffect(() => {
+    if (detail !== "popover") {
+      // oxlint-disable-next-line react/set-state-in-effect
+      setInternalDetail(undefined);
+      return;
+    }
+    if (detailId === undefined) return;
+    const stillThere =
+      laid.nodes.some(({ node }) => node.id === detailId) ||
+      laid.edges.some(({ edge }) => edge.id === detailId);
+    // oxlint-disable-next-line react/set-state-in-effect
+    if (!stillThere) setInternalDetail(undefined);
+  }, [detail, detailId, laid]);
 
   const handleNodeClick = (id: string) => {
     onNodeClick?.(id);

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { ingress } from "../../example/data/ingress.js";
@@ -229,6 +230,11 @@ describe("EdgeDetail", () => {
 const dialog = (screen: Awaited<ReturnType<typeof render>>) =>
   screen.container.querySelector("[data-conduit-popover]") as HTMLElement | null;
 
+const Controlled = () => {
+  const [d, setD] = useState<string | undefined>(undefined);
+  return <Diagram doc={ingress} detail="popover" detailFor={d} onDetailChange={setD} />;
+};
+
 describe("Diagram detail", () => {
   it("opens a node popover on click, inside the canvas, and toggles closed", async () => {
     const screen = await render(<Diagram doc={ingress} detail="popover" />);
@@ -323,5 +329,33 @@ describe("Diagram detail", () => {
     const screen = await render(<Diagram doc={ingress} />);
     expect(screen.container.querySelector("path[data-edge-hit]")).toBeNull();
     expect(dialog(screen)).toBeNull();
+  });
+
+  it("closes in controlled mode when the parent stores the reported id", async () => {
+    const screen = await render(<Controlled />);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.element(screen.getByRole("dialog", { name: "Warehouse" })).toBeVisible();
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.poll(() => dialog(screen)).toBeNull();
+  });
+
+  it("does not re-open after detail is turned off and on", async () => {
+    const screen = await render(<Diagram doc={ingress} detail="popover" />);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.element(screen.getByRole("dialog", { name: "Warehouse" })).toBeVisible();
+    await screen.rerender(<Diagram doc={ingress} detail="none" />);
+    await expect.poll(() => dialog(screen)).toBeNull();
+    await screen.rerender(<Diagram doc={ingress} detail="popover" />);
+    await expect.poll(() => dialog(screen)).toBeNull();
+  });
+
+  it("closes when a view scopes the target out", async () => {
+    const screen = await render(<Diagram doc={ingress} detail="popover" />);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.element(screen.getByRole("dialog", { name: "Warehouse" })).toBeVisible();
+    await screen.rerender(<Diagram doc={ingress} detail="popover" view="ingestion-path" />);
+    await expect.poll(() => dialog(screen)).toBeNull();
+    await screen.rerender(<Diagram doc={ingress} detail="popover" />);
+    await expect.poll(() => dialog(screen)).toBeNull();
   });
 });
