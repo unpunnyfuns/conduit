@@ -49,3 +49,7 @@ Three layers, strictly one-directional:
 - `unicorn/no-array-sort` is off (the code sorts freshly spread copies). `oxfmt` ignores `docs/**`.
 - `example/` imports the library as `@unpunnyfuns/conduit` via aliases in `example/vite.config.ts`, the vitest browser project, and `tsconfig.json` `paths`.
 - Deferred to later: data-flow (sequence) diagrams, walkthrough tours, manifests. The schema leaves room (`flows` can be added without breaking documents).
+
+## Releasing
+
+Bump `version` in `package.json`, commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`. `.github/workflows/publish.yaml` tests, builds and runs `npm stage publish`; the release goes live only after a maintainer approves it on npmjs.com (Staged Packages) or with `npm stage approve` — that approval is the 2FA step. Only repository admins can create tags (GitHub ruleset "Main"). No npm token exists anywhere; never add one. Dependencies have a 3-day cooldown (`.npmrc` `min-release-age`).
