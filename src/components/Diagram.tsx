@@ -242,23 +242,6 @@ export const Diagram = ({
           );
         })}
 
-        <ul className="sr-only">
-          {laid.edges.map(({ edge }) => {
-            const text = `${nodeLabel.get(edge.from) ?? edge.from} → ${nodeLabel.get(edge.to) ?? edge.to}, ${edge.kind}`;
-            return (
-              <li key={edge.id}>
-                {handleEdgeClick === undefined ? (
-                  text
-                ) : (
-                  <button type="button" onClick={() => handleEdgeClick(edge.id)}>
-                    {text}
-                  </button>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-
         {detailNode !== undefined && (
           <Popover
             anchor={detailNode.box}
@@ -298,6 +281,23 @@ export const Diagram = ({
             </EdgeDetail>
           </Popover>
         )}
+
+        <ul className="sr-only">
+          {laid.edges.map(({ edge }) => {
+            const text = `${nodeLabel.get(edge.from) ?? edge.from} → ${nodeLabel.get(edge.to) ?? edge.to}, ${edge.kind}`;
+            return (
+              <li key={edge.id}>
+                {handleEdgeClick === undefined ? (
+                  text
+                ) : (
+                  <button type="button" onClick={() => handleEdgeClick(edge.id)}>
+                    {text}
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );
