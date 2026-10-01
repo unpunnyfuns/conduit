@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { Box } from "../../layout/geometry.js";
-import { placePopover, POPOVER_WIDTH, type Size } from "./place.js";
+import { placePopover, POPOVER_GAP, POPOVER_WIDTH, type Size } from "./place.js";
 
 export type PopoverProps = {
   anchor: Box;
@@ -91,6 +91,8 @@ export const Popover = ({ anchor, canvas, labelledBy, onClose, children }: Popov
         left: box.x,
         top: box.y,
         width: POPOVER_WIDTH,
+        maxHeight: canvas.height - 2 * POPOVER_GAP,
+        overflowY: "auto",
         visibility: height === undefined ? "hidden" : "visible",
       }}
     >

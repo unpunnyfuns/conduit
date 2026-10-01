@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import type { ConduitDocument, ConduitNode, Edge } from "../schema/document.js";
 import { cn } from "../cn.js";
+import type { Box } from "../layout/geometry.js";
 import { DEFAULT_CARD_HEIGHTS, type CardHeights } from "../layout/design.js";
 import { layout } from "../layout/layout.js";
 import { traceFrom, type Highlight } from "../layout/trace.js";
@@ -44,6 +45,14 @@ export type DiagramProps = {
 
 const headerHeightOf = (node: ConduitNode, heights: CardHeights): number =>
   node.subtitle === undefined ? heights.compact : heights.withSubtitle;
+
+/** A zero-size anchor at a box's centre, for an edge with no label pill. */
+const edgeCenterAnchor = (box: Box): Box => ({
+  x: box.x + box.width / 2,
+  y: box.y + box.height / 2,
+  width: 0,
+  height: 0,
+});
 
 /**
  * The diagram: lanes underneath, one svg of edges, cards on top. Layout is
@@ -178,6 +187,10 @@ export const Diagram = ({
     detailId === undefined || detailNode !== undefined
       ? undefined
       : laid.edges.find(({ edge }) => edge.id === detailId);
+  const detailEdgeAnchor =
+    detailEdge === undefined
+      ? undefined
+      : (detailEdge.label?.box ?? edgeCenterAnchor(laid.atlas.edges[detailEdge.edge.id]!));
   const labelOf = (id: string) => nodeLabel.get(id) ?? id;
 
   const emphasised = lit === undefined || highlight === "neighbours" ? undefined : lit.edges;
@@ -247,6 +260,8 @@ export const Diagram = ({
               headerHeight={headerHeight}
               dimmed={lit !== undefined && !lit.nodes.has(node.id)}
               selected={selected?.includes(node.id) ?? false}
+              hasPopup={detail === "popover"}
+              expanded={detailId === node.id}
               onClick={
                 onNodeClick === undefined && detail !== "popover"
                   ? undefined
@@ -280,10 +295,7 @@ export const Diagram = ({
         {detailEdge !== undefined && (
           <Popover
             key={detailId}
-            anchor={
-              detailEdge.label?.box ??
-              laid.atlas.edges[detailEdge.edge.id] ?? { x: 0, y: 0, width: 0, height: 0 }
-            }
+            anchor={detailEdgeAnchor!}
             canvas={{ width: laid.width, height: laid.height }}
             labelledBy={titleId}
             onClose={closeDetail}

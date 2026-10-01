@@ -6,6 +6,7 @@ import { EdgeDetail } from "../../src/components/detail/EdgeDetail.js";
 import { NodeDetail } from "../../src/components/detail/NodeDetail.js";
 import { Popover } from "../../src/components/detail/Popover.js";
 import { Diagram, parseDocument } from "../../src/index.js";
+import { layout } from "../../src/layout.js";
 
 const canvas = { width: 800, height: 600 };
 const anchor = { x: 40, y: 40, width: 200, height: 52 };
@@ -432,5 +433,38 @@ describe("Diagram detail", () => {
         );
       })
       .toBe(true);
+  });
+
+  it("anchors an unlabelled edge near its route", async () => {
+    const screen = await render(<Diagram doc={ingress} detail="popover" />);
+    const hit = screen.container.querySelector(
+      "path[data-edge-hit='validator-to-scrubber']",
+    ) as SVGPathElement;
+    hit.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await expect.element(screen.getByRole("dialog")).toBeVisible();
+    const canvasRect = (
+      screen.container.querySelector("[data-conduit-canvas]") as HTMLElement
+    ).getBoundingClientRect();
+    const atlasBox = layout(ingress).atlas.edges["validator-to-scrubber"]!;
+    const expectedCenter = {
+      x: canvasRect.left + atlasBox.x + atlasBox.width / 2,
+      y: canvasRect.top + atlasBox.y + atlasBox.height / 2,
+    };
+    const box = dialog(screen)!.getBoundingClientRect();
+    const dialogCenter = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    const distance = Math.hypot(
+      dialogCenter.x - expectedCenter.x,
+      dialogCenter.y - expectedCenter.y,
+    );
+    expect(distance).toBeLessThanOrEqual(200);
+  });
+
+  it("marks the trigger button as a dialog opener in popover mode", async () => {
+    const screen = await render(<Diagram doc={ingress} detail="popover" />);
+    const btn = screen.getByRole("button", { name: "Warehouse", exact: true });
+    expect(btn.element().getAttribute("aria-haspopup")).toBe("dialog");
+    expect(btn.element().getAttribute("aria-expanded")).toBe("false");
+    await btn.click();
+    await expect.poll(() => btn.element().getAttribute("aria-expanded")).toBe("true");
   });
 });

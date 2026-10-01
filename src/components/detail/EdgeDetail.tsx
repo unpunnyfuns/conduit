@@ -30,7 +30,7 @@ export const EdgeDetail = ({
     {state !== undefined && (
       <div className="mt-2 text-[12px]">
         {`State: ${state.level}`}
-        {state.rate !== undefined && ` · ${state.rate}/s`}
+        {state.rate !== undefined && ` · ${state.rate}`}
       </div>
     )}
     {children}
