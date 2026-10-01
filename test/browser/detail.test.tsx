@@ -4,7 +4,7 @@ import { ingress } from "../../example/data/ingress.js";
 import { EdgeDetail } from "../../src/components/detail/EdgeDetail.js";
 import { NodeDetail } from "../../src/components/detail/NodeDetail.js";
 import { Popover } from "../../src/components/detail/Popover.js";
-import { parseDocument } from "../../src/index.js";
+import { Diagram, parseDocument } from "../../src/index.js";
 
 const canvas = { width: 800, height: 600 };
 const anchor = { x: 40, y: 40, width: 200, height: 52 };
@@ -223,5 +223,102 @@ describe("EdgeDetail", () => {
     expect(screen.container.textContent).toContain("data");
     expect(screen.container.textContent).toContain("dbt");
     expect(screen.container.textContent).toContain("State: stale");
+  });
+});
+
+const dialog = (screen: Awaited<ReturnType<typeof render>>) =>
+  screen.container.querySelector("[data-conduit-popover]") as HTMLElement | null;
+
+describe("Diagram detail", () => {
+  it("opens a node popover on click, inside the canvas, and toggles closed", async () => {
+    const screen = await render(<Diagram doc={ingress} detail="popover" />);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.element(screen.getByRole("dialog", { name: "Warehouse" })).toBeVisible();
+    const canvasRect = (
+      screen.container.querySelector("[data-conduit-canvas]") as HTMLElement
+    ).getBoundingClientRect();
+    const box = dialog(screen)!.getBoundingClientRect();
+    expect(box.left).toBeGreaterThanOrEqual(canvasRect.left - 1);
+    expect(box.right).toBeLessThanOrEqual(canvasRect.right + 1);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.poll(() => dialog(screen)).toBeNull();
+  });
+
+  it("places the popover left of the rightmost card", async () => {
+    const screen = await render(<Diagram doc={ingress} detail="popover" />);
+    await screen.getByRole("button", { name: "Analytics UI", exact: true }).click();
+    const card = (
+      screen.container.querySelector("[data-conduit-node='analytics-ui']") as HTMLElement
+    ).getBoundingClientRect();
+    await expect
+      .poll(() => dialog(screen)?.getBoundingClientRect().right ?? Infinity)
+      .toBeLessThanOrEqual(card.left + 1);
+  });
+
+  it("works in direction down", async () => {
+    const screen = await render(
+      <Diagram doc={{ ...ingress, direction: "down" }} detail="popover" />,
+    );
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.element(screen.getByRole("dialog", { name: "Warehouse" })).toBeVisible();
+  });
+
+  it("appends renderDetail content", async () => {
+    const screen = await render(
+      <Diagram
+        doc={ingress}
+        detail="popover"
+        renderDetail={(t) => (t.kind === "node" ? <div>Owner: data-platform</div> : null)}
+      />,
+    );
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.element(screen.getByText("Owner: data-platform")).toBeVisible();
+  });
+
+  it("opens an edge popover from its hit path without an onEdgeClick prop", async () => {
+    const screen = await render(
+      <Diagram
+        doc={ingress}
+        detail="popover"
+        edgeState={{ "lake-to-warehouse": { level: "stale" } }}
+      />,
+    );
+    const hit = screen.container.querySelector(
+      "path[data-edge-hit='lake-to-warehouse']",
+    ) as SVGPathElement;
+    hit.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await expect
+      .element(screen.getByRole("dialog", { name: "Raw lake → Warehouse" }))
+      .toBeVisible();
+    expect(screen.container.textContent).toContain("State: stale");
+  });
+
+  it("switches to a neighbour from the connections list", async () => {
+    const screen = await render(<Diagram doc={ingress} detail="popover" />);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await screen.getByRole("button", { name: /Raw lake/ }).click();
+    await expect.element(screen.getByRole("dialog", { name: "Raw lake, s3://raw" })).toBeVisible();
+  });
+
+  it("is controllable", async () => {
+    const onDetailChange = vi.fn();
+    const screen = await render(
+      <Diagram
+        doc={ingress}
+        detail="popover"
+        detailFor="warehouse"
+        onDetailChange={onDetailChange}
+      />,
+    );
+    await expect.element(screen.getByRole("dialog", { name: "Warehouse" })).toBeVisible();
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    expect(onDetailChange).toHaveBeenCalledWith(undefined);
+    await expect.element(screen.getByRole("dialog", { name: "Warehouse" })).toBeVisible();
+  });
+
+  it("does not render hit paths or a popover when detail is none", async () => {
+    const screen = await render(<Diagram doc={ingress} />);
+    expect(screen.container.querySelector("path[data-edge-hit]")).toBeNull();
+    expect(dialog(screen)).toBeNull();
   });
 });

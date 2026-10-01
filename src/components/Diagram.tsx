@@ -1,13 +1,18 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { ConduitDocument, ConduitNode } from "../schema/document.js";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import type { ConduitDocument, ConduitNode, Edge } from "../schema/document.js";
 import { cn } from "../cn.js";
 import { DEFAULT_CARD_HEIGHTS, type CardHeights } from "../layout/design.js";
 import { layout } from "../layout/layout.js";
 import { traceFrom, type Highlight } from "../layout/trace.js";
 import { Card } from "./Card.js";
+import { EdgeDetail } from "./detail/EdgeDetail.js";
+import { NodeDetail } from "./detail/NodeDetail.js";
+import { Popover } from "./detail/Popover.js";
 import { EdgeLayer } from "./EdgeLayer.js";
 import { LaneBand } from "./Lane.js";
 import type { EdgeState } from "./pulse.js";
+
+export type DetailTarget = { kind: "node"; node: ConduitNode } | { kind: "edge"; edge: Edge };
 
 export type DiagramProps = {
   doc: ConduitDocument;
@@ -28,6 +33,13 @@ export type DiagramProps = {
   children?: (node: ConduitNode) => ReactNode;
   /** Live overlay by edge id; changes never relayout. */
   edgeState?: Readonly<Record<string, EdgeState>>;
+  /** Show a popover with the clicked element's summary and connections. */
+  detail?: "popover" | "none";
+  /** Controlled detail target (node or edge id). */
+  detailFor?: string;
+  onDetailChange?: (id: string | undefined) => void;
+  /** Extra content appended inside the detail. */
+  renderDetail?: (target: DetailTarget) => ReactNode;
 };
 
 const headerHeightOf = (node: ConduitNode, heights: CardHeights): number =>
@@ -55,6 +67,10 @@ export const Diagram = ({
   fit = false,
   children,
   edgeState,
+  detail,
+  detailFor,
+  onDetailChange,
+  renderDetail,
 }: DiagramProps) => {
   // Deps are the scalars, not `cardHeights` itself: a caller passing a fresh
   // object literal every render must not defeat the memo below it.
@@ -116,6 +132,38 @@ export const Diagram = ({
     return { nodes, edges, lanes };
   }, [selected, highlight, laid]);
 
+  const [internalDetail, setInternalDetail] = useState<string | undefined>(undefined);
+  const detailId = detail === "popover" ? (detailFor ?? internalDetail) : undefined;
+  const setDetail = useCallback(
+    (id: string | undefined) => {
+      if (detailFor === undefined) setInternalDetail(id);
+      onDetailChange?.(id);
+    },
+    [detailFor, onDetailChange],
+  );
+  const closeDetail = useCallback(() => setDetail(undefined), [setDetail]);
+  const titleId = useId();
+
+  const handleNodeClick = (id: string) => {
+    onNodeClick?.(id);
+    if (detail === "popover") setDetail(id === detailId ? undefined : id);
+  };
+  const handleEdgeClick =
+    onEdgeClick === undefined && detail !== "popover"
+      ? undefined
+      : (id: string) => {
+          onEdgeClick?.(id);
+          if (detail === "popover") setDetail(id === detailId ? undefined : id);
+        };
+
+  const detailNode =
+    detailId === undefined ? undefined : laid.nodes.find(({ node }) => node.id === detailId);
+  const detailEdge =
+    detailId === undefined || detailNode !== undefined
+      ? undefined
+      : laid.edges.find(({ edge }) => edge.id === detailId);
+  const labelOf = (id: string) => nodeLabel.get(id) ?? id;
+
   const emphasised = lit === undefined || highlight === "neighbours" ? undefined : lit.edges;
 
   const dimmedEdges = useMemo(
@@ -167,7 +215,7 @@ export const Diagram = ({
           edges={laid.edges}
           dimmedIds={dimmedEdges}
           emphasisedIds={emphasised}
-          onEdgeClick={onEdgeClick}
+          onEdgeClick={handleEdgeClick}
           edgeState={edgeState}
         />
 
@@ -183,7 +231,11 @@ export const Diagram = ({
               headerHeight={headerHeight}
               dimmed={lit !== undefined && !lit.nodes.has(node.id)}
               selected={selected?.includes(node.id) ?? false}
-              onClick={onNodeClick === undefined ? undefined : () => onNodeClick(node.id)}
+              onClick={
+                onNodeClick === undefined && detail !== "popover"
+                  ? undefined
+                  : () => handleNodeClick(node.id)
+              }
             >
               {hasBody ? children?.(node) : null}
             </Card>
@@ -195,10 +247,10 @@ export const Diagram = ({
             const text = `${nodeLabel.get(edge.from) ?? edge.from} → ${nodeLabel.get(edge.to) ?? edge.to}, ${edge.kind}`;
             return (
               <li key={edge.id}>
-                {onEdgeClick === undefined ? (
+                {handleEdgeClick === undefined ? (
                   text
                 ) : (
-                  <button type="button" onClick={() => onEdgeClick(edge.id)}>
+                  <button type="button" onClick={() => handleEdgeClick(edge.id)}>
                     {text}
                   </button>
                 )}
@@ -206,6 +258,46 @@ export const Diagram = ({
             );
           })}
         </ul>
+
+        {detailNode !== undefined && (
+          <Popover
+            anchor={detailNode.box}
+            canvas={{ width: laid.width, height: laid.height }}
+            labelledBy={titleId}
+            onClose={closeDetail}
+          >
+            <NodeDetail
+              node={detailNode.node}
+              edges={laid.edges.map(({ edge }) => edge)}
+              labelOf={labelOf}
+              titleId={titleId}
+              onSelect={setDetail}
+            >
+              {renderDetail?.({ kind: "node", node: detailNode.node })}
+            </NodeDetail>
+          </Popover>
+        )}
+        {detailEdge !== undefined && (
+          <Popover
+            anchor={
+              detailEdge.label?.box ??
+              laid.atlas.edges[detailEdge.edge.id] ?? { x: 0, y: 0, width: 0, height: 0 }
+            }
+            canvas={{ width: laid.width, height: laid.height }}
+            labelledBy={titleId}
+            onClose={closeDetail}
+          >
+            <EdgeDetail
+              edge={detailEdge.edge}
+              fromLabel={labelOf(detailEdge.edge.from)}
+              toLabel={labelOf(detailEdge.edge.to)}
+              titleId={titleId}
+              state={edgeState?.[detailEdge.edge.id]}
+            >
+              {renderDetail?.({ kind: "edge", edge: detailEdge.edge })}
+            </EdgeDetail>
+          </Popover>
+        )}
       </div>
     </div>
   );

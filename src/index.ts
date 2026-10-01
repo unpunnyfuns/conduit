@@ -27,3 +27,8 @@ export {
 } from "./components/pulse.js";
 export { Badge } from "./components/Badge.js";
 export { KindIcon } from "./components/icons.js";
+export { Popover, type PopoverProps } from "./components/detail/Popover.js";
+export { placePopover, POPOVER_WIDTH, POPOVER_GAP, type Size } from "./components/detail/place.js";
+export { NodeDetail, type NodeDetailProps } from "./components/detail/NodeDetail.js";
+export { EdgeDetail, type EdgeDetailProps } from "./components/detail/EdgeDetail.js";
+export type { DetailTarget } from "./components/Diagram.js";
