@@ -24,6 +24,10 @@ export type CardProps = {
   headerHeight: number;
   dimmed?: boolean;
   selected?: boolean;
+  /** The header button opens a dialog; adds `aria-haspopup`/`aria-expanded`. */
+  hasPopup?: boolean;
+  /** Whether the dialog `hasPopup` opens is currently showing. */
+  expanded?: boolean;
   onClick?: () => void;
   children?: ReactNode;
 };
@@ -39,6 +43,8 @@ export const Card = ({
   headerHeight,
   dimmed = false,
   selected = false,
+  hasPopup = false,
+  expanded,
   onClick,
   children,
 }: CardProps) => {
@@ -58,6 +64,8 @@ export const Card = ({
         <button
           type="button"
           aria-label={label}
+          aria-haspopup={hasPopup ? "dialog" : undefined}
+          aria-expanded={hasPopup ? expanded : undefined}
           onClick={onClick}
           className="absolute inset-x-0 top-0 cursor-pointer rounded-[10px] bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conduit-fg/40"
           style={{ height: headerHeight }}

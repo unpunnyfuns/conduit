@@ -13,8 +13,22 @@ export const ingress: ConduitDocument = parseDocument({
     { id: "consume", label: "Consumers", order: 4 },
   ],
   nodes: [
-    { id: "partner-api", label: "Partner API", kind: "external", lane: "sources", row: 0 },
-    { id: "sftp-drop", label: "SFTP drop", kind: "external", lane: "sources", row: 1 },
+    {
+      id: "partner-api",
+      label: "Partner API",
+      kind: "external",
+      lane: "sources",
+      row: 0,
+      summary: "A partner's HTTP API that pushes JSON events to us.",
+    },
+    {
+      id: "sftp-drop",
+      label: "SFTP drop",
+      kind: "external",
+      lane: "sources",
+      row: 1,
+      summary: "A third party drops CSV files here on their own schedule.",
+    },
     {
       id: "webhooks",
       label: "Webhooks",
@@ -23,6 +37,7 @@ export const ingress: ConduitDocument = parseDocument({
       row: 2,
       status: "positive",
       badges: [{ label: "NEW", tone: "positive" }],
+      summary: "Inbound webhook events from subscribed external services.",
     },
     {
       id: "kafka-ingest",
@@ -32,6 +47,7 @@ export const ingress: ConduitDocument = parseDocument({
       row: 0,
       subtitle: "topic: raw.events",
       size: "chart",
+      summary: "Buffers raw events on the raw.events topic for downstream readers.",
     },
     {
       id: "batch-loader",
@@ -41,6 +57,7 @@ export const ingress: ConduitDocument = parseDocument({
       row: 1,
       subtitle: "nightly 02:00",
       size: "chart",
+      summary: "Nightly job that picks up dropped files and loads them for validation.",
     },
     {
       id: "schema-validator",
@@ -49,8 +66,16 @@ export const ingress: ConduitDocument = parseDocument({
       lane: "validate",
       row: 0,
       size: "chart",
+      summary: "Checks incoming records against the registered schema before they move on.",
     },
-    { id: "pii-scrubber", label: "PII scrubber", kind: "service", lane: "validate", row: 1 },
+    {
+      id: "pii-scrubber",
+      label: "PII scrubber",
+      kind: "service",
+      lane: "validate",
+      row: 1,
+      summary: "Strips or masks personally identifiable fields from validated records.",
+    },
     {
       id: "raw-lake",
       label: "Raw lake",
@@ -59,6 +84,7 @@ export const ingress: ConduitDocument = parseDocument({
       row: 0,
       subtitle: "s3://raw",
       size: "chart",
+      summary: "Durable object storage holding scrubbed records in their raw form.",
     },
     {
       id: "warehouse",
@@ -67,6 +93,7 @@ export const ingress: ConduitDocument = parseDocument({
       lane: "store",
       row: 1,
       size: "chart",
+      summary: "Modelled, query-ready tables built from the raw lake by dbt.",
     },
     {
       id: "legacy-ftp",
@@ -76,9 +103,24 @@ export const ingress: ConduitDocument = parseDocument({
       row: 2,
       status: "critical",
       badges: [{ label: "DEPRECATED", tone: "critical" }],
+      summary: "An old FTP mirror kept only for a handful of clients still reading from it.",
     },
-    { id: "analytics-ui", label: "Analytics UI", kind: "ui", lane: "consume", row: 0 },
-    { id: "reporting-job", label: "Reporting job", kind: "job", lane: "consume", row: 1 },
+    {
+      id: "analytics-ui",
+      label: "Analytics UI",
+      kind: "ui",
+      lane: "consume",
+      row: 0,
+      summary: "The internal dashboard analysts use to query warehouse tables.",
+    },
+    {
+      id: "reporting-job",
+      label: "Reporting job",
+      kind: "job",
+      lane: "consume",
+      row: 1,
+      summary: "Scheduled job that builds and emails recurring reports from the warehouse.",
+    },
   ],
   edges: [
     {
@@ -88,6 +130,7 @@ export const ingress: ConduitDocument = parseDocument({
       kind: "http",
       label: "JSON",
       animated: true,
+      summary: "The partner posts a JSON payload for every event as it happens.",
     },
     {
       id: "webhooks-to-kafka",
@@ -97,7 +140,14 @@ export const ingress: ConduitDocument = parseDocument({
       animated: true,
       status: "positive",
     },
-    { id: "sftp-to-batch", from: "sftp-drop", to: "batch-loader", kind: "data", label: "CSV" },
+    {
+      id: "sftp-to-batch",
+      from: "sftp-drop",
+      to: "batch-loader",
+      kind: "data",
+      label: "CSV",
+      summary: "The batch loader picks up each CSV file dropped over SFTP.",
+    },
     {
       id: "kafka-to-validator",
       from: "kafka-ingest",
@@ -109,7 +159,14 @@ export const ingress: ConduitDocument = parseDocument({
     { id: "batch-to-validator", from: "batch-loader", to: "schema-validator", kind: "call" },
     { id: "validator-to-scrubber", from: "schema-validator", to: "pii-scrubber", kind: "call" },
     { id: "scrubber-to-lake", from: "pii-scrubber", to: "raw-lake", kind: "data", animated: true },
-    { id: "lake-to-warehouse", from: "raw-lake", to: "warehouse", kind: "data", label: "dbt" },
+    {
+      id: "lake-to-warehouse",
+      from: "raw-lake",
+      to: "warehouse",
+      kind: "data",
+      label: "dbt",
+      summary: "dbt models raw lake records into the warehouse's query-ready tables.",
+    },
     {
       id: "batch-to-legacy",
       from: "batch-loader",

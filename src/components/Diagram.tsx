@@ -1,13 +1,19 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { ConduitDocument, ConduitNode } from "../schema/document.js";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import type { ConduitDocument, ConduitNode, Edge } from "../schema/document.js";
 import { cn } from "../cn.js";
+import type { Box } from "../layout/geometry.js";
 import { DEFAULT_CARD_HEIGHTS, type CardHeights } from "../layout/design.js";
 import { layout } from "../layout/layout.js";
 import { traceFrom, type Highlight } from "../layout/trace.js";
 import { Card } from "./Card.js";
+import { EdgeDetail } from "./detail/EdgeDetail.js";
+import { NodeDetail } from "./detail/NodeDetail.js";
+import { Popover } from "./detail/Popover.js";
 import { EdgeLayer } from "./EdgeLayer.js";
 import { LaneBand } from "./Lane.js";
 import type { EdgeState } from "./pulse.js";
+
+export type DetailTarget = { kind: "node"; node: ConduitNode } | { kind: "edge"; edge: Edge };
 
 export type DiagramProps = {
   doc: ConduitDocument;
@@ -28,10 +34,25 @@ export type DiagramProps = {
   children?: (node: ConduitNode) => ReactNode;
   /** Live overlay by edge id; changes never relayout. */
   edgeState?: Readonly<Record<string, EdgeState>>;
+  /** Show a popover with the clicked element's summary and connections. */
+  detail?: "popover" | "none";
+  /** Controlled detail target (node or edge id). `undefined` means closed; a parent that stores the id from `onDetailChange` gets a normal open/close cycle. */
+  detailFor?: string;
+  onDetailChange?: (id: string | undefined) => void;
+  /** Extra content appended inside the detail. */
+  renderDetail?: (target: DetailTarget) => ReactNode;
 };
 
 const headerHeightOf = (node: ConduitNode, heights: CardHeights): number =>
   node.subtitle === undefined ? heights.compact : heights.withSubtitle;
+
+/** A zero-size anchor at a box's centre, for an edge with no label pill. */
+const edgeCenterAnchor = (box: Box): Box => ({
+  x: box.x + box.width / 2,
+  y: box.y + box.height / 2,
+  width: 0,
+  height: 0,
+});
 
 /**
  * The diagram: lanes underneath, one svg of edges, cards on top. Layout is
@@ -55,6 +76,10 @@ export const Diagram = ({
   fit = false,
   children,
   edgeState,
+  detail,
+  detailFor,
+  onDetailChange,
+  renderDetail,
 }: DiagramProps) => {
   // Deps are the scalars, not `cardHeights` itself: a caller passing a fresh
   // object literal every render must not defeat the memo below it.
@@ -116,6 +141,58 @@ export const Diagram = ({
     return { nodes, edges, lanes };
   }, [selected, highlight, laid]);
 
+  const [internalDetail, setInternalDetail] = useState<string | undefined>(undefined);
+  const detailId = detail === "popover" ? (detailFor ?? internalDetail) : undefined;
+  const setDetail = useCallback(
+    (id: string | undefined) => {
+      setInternalDetail(id);
+      onDetailChange?.(id);
+    },
+    [onDetailChange],
+  );
+  const closeDetail = useCallback(() => setDetail(undefined), [setDetail]);
+  const titleId = useId();
+
+  // A stale target (detail turned off and back on, or scoped out by a view
+  // change) must not re-open on its own when it next becomes reachable.
+  useEffect(() => {
+    if (detail !== "popover") {
+      // oxlint-disable-next-line react/set-state-in-effect
+      setInternalDetail(undefined);
+      return;
+    }
+    if (detailId === undefined) return;
+    const stillThere =
+      laid.nodes.some(({ node }) => node.id === detailId) ||
+      laid.edges.some(({ edge }) => edge.id === detailId);
+    // oxlint-disable-next-line react/set-state-in-effect
+    if (!stillThere) setInternalDetail(undefined);
+  }, [detail, detailId, laid]);
+
+  const handleNodeClick = (id: string) => {
+    onNodeClick?.(id);
+    if (detail === "popover") setDetail(id === detailId ? undefined : id);
+  };
+  const handleEdgeClick =
+    onEdgeClick === undefined && detail !== "popover"
+      ? undefined
+      : (id: string) => {
+          onEdgeClick?.(id);
+          if (detail === "popover") setDetail(id === detailId ? undefined : id);
+        };
+
+  const detailNode =
+    detailId === undefined ? undefined : laid.nodes.find(({ node }) => node.id === detailId);
+  const detailEdge =
+    detailId === undefined || detailNode !== undefined
+      ? undefined
+      : laid.edges.find(({ edge }) => edge.id === detailId);
+  const detailEdgeAnchor =
+    detailEdge === undefined
+      ? undefined
+      : (detailEdge.label?.box ?? edgeCenterAnchor(laid.atlas.edges[detailEdge.edge.id]!));
+  const labelOf = (id: string) => nodeLabel.get(id) ?? id;
+
   const emphasised = lit === undefined || highlight === "neighbours" ? undefined : lit.edges;
 
   const dimmedEdges = useMemo(
@@ -167,7 +244,7 @@ export const Diagram = ({
           edges={laid.edges}
           dimmedIds={dimmedEdges}
           emphasisedIds={emphasised}
-          onEdgeClick={onEdgeClick}
+          onEdgeClick={handleEdgeClick}
           edgeState={edgeState}
         />
 
@@ -183,22 +260,67 @@ export const Diagram = ({
               headerHeight={headerHeight}
               dimmed={lit !== undefined && !lit.nodes.has(node.id)}
               selected={selected?.includes(node.id) ?? false}
-              onClick={onNodeClick === undefined ? undefined : () => onNodeClick(node.id)}
+              hasPopup={detail === "popover"}
+              expanded={detailId === node.id}
+              onClick={
+                onNodeClick === undefined && detail !== "popover"
+                  ? undefined
+                  : () => handleNodeClick(node.id)
+              }
             >
               {hasBody ? children?.(node) : null}
             </Card>
           );
         })}
 
-        <ul className="sr-only">
+        {detailNode !== undefined && (
+          <Popover
+            key={detailId}
+            anchor={detailNode.box}
+            canvas={{ width: laid.width, height: laid.height }}
+            labelledBy={titleId}
+            onClose={closeDetail}
+          >
+            <NodeDetail
+              node={detailNode.node}
+              edges={laid.edges.map(({ edge }) => edge)}
+              labelOf={labelOf}
+              titleId={titleId}
+              onSelect={setDetail}
+            >
+              {renderDetail?.({ kind: "node", node: detailNode.node })}
+            </NodeDetail>
+          </Popover>
+        )}
+        {detailEdge !== undefined && (
+          <Popover
+            key={detailId}
+            anchor={detailEdgeAnchor!}
+            canvas={{ width: laid.width, height: laid.height }}
+            labelledBy={titleId}
+            onClose={closeDetail}
+          >
+            <EdgeDetail
+              edge={detailEdge.edge}
+              fromLabel={labelOf(detailEdge.edge.from)}
+              toLabel={labelOf(detailEdge.edge.to)}
+              titleId={titleId}
+              state={edgeState?.[detailEdge.edge.id]}
+            >
+              {renderDetail?.({ kind: "edge", edge: detailEdge.edge })}
+            </EdgeDetail>
+          </Popover>
+        )}
+
+        <ul className="sr-only" data-conduit-edge-list>
           {laid.edges.map(({ edge }) => {
             const text = `${nodeLabel.get(edge.from) ?? edge.from} → ${nodeLabel.get(edge.to) ?? edge.to}, ${edge.kind}`;
             return (
               <li key={edge.id}>
-                {onEdgeClick === undefined ? (
+                {handleEdgeClick === undefined ? (
                   text
                 ) : (
-                  <button type="button" onClick={() => onEdgeClick(edge.id)}>
+                  <button type="button" onClick={() => handleEdgeClick(edge.id)}>
                     {text}
                   </button>
                 )}
