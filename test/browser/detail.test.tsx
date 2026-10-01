@@ -53,21 +53,35 @@ describe("Popover", () => {
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 
-  it("ignores mousedown on a card or edge hit path", async () => {
+  it("ignores mousedown on an edge hit path or a card's header button, but not its body", async () => {
     const onClose = vi.fn();
     const screen = await render(
       <div data-conduit-canvas style={{ position: "relative", width: 800, height: 600 }}>
-        <div data-conduit-node="x" data-testid="card" />
+        <div data-conduit-node="x" data-testid="card">
+          <button type="button" data-testid="card-button">
+            header
+          </button>
+        </div>
+        <div data-edge-hit="y" data-testid="edge-hit" />
         <Popover anchor={anchor} canvas={canvas} labelledBy="t" onClose={onClose}>
           <h3 id="t">Title</h3>
         </Popover>
       </div>,
     );
     screen
-      .getByTestId("card")
+      .getByTestId("edge-hit")
+      .element()
+      .dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    screen
+      .getByTestId("card-button")
       .element()
       .dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
     expect(onClose).not.toHaveBeenCalled();
+    screen
+      .getByTestId("card")
+      .element()
+      .dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("restores focus on unmount", async () => {
@@ -235,6 +249,18 @@ const Controlled = () => {
   return <Diagram doc={ingress} detail="popover" detailFor={d} onDetailChange={setD} />;
 };
 
+const Tick = () => {
+  const [tick, setTick] = useState(0);
+  return (
+    <>
+      <button data-testid="tick" type="button" onClick={() => setTick((t) => t + 1)}>
+        {tick}
+      </button>
+      <Diagram doc={ingress} detail="popover" onDetailChange={(id) => void id} />
+    </>
+  );
+};
+
 describe("Diagram detail", () => {
   it("opens a node popover on click, inside the canvas, and toggles closed", async () => {
     const screen = await render(<Diagram doc={ingress} detail="popover" />);
@@ -357,5 +383,53 @@ describe("Diagram detail", () => {
     await expect.poll(() => dialog(screen)).toBeNull();
     await screen.rerender(<Diagram doc={ingress} detail="popover" />);
     await expect.poll(() => dialog(screen)).toBeNull();
+  });
+
+  it("keeps focus in the dialog across an unrelated re-render with an inline onDetailChange", async () => {
+    const screen = await render(<Tick />);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.poll(() => document.activeElement?.getAttribute("role")).toBe("dialog");
+    // A plain click event, not a full click() gesture: this isolates the
+    // re-render churn this test targets from the (separately covered)
+    // outside-mousedown-closes behaviour, which a real mousedown on an
+    // unrelated sibling button would also legitimately trigger.
+    screen
+      .getByTestId("tick")
+      .element()
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await expect.poll(() => document.activeElement?.getAttribute("role")).toBe("dialog");
+  });
+
+  it("a click on a card body closes the popover", async () => {
+    const screen = await render(<Diagram doc={ingress} detail="popover" />);
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.element(screen.getByRole("dialog", { name: "Warehouse" })).toBeVisible();
+    const card = screen.container.querySelector(
+      "[data-conduit-node='kafka-ingest']",
+    ) as HTMLElement;
+    card.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    await expect.poll(() => dialog(screen)).toBeNull();
+  });
+
+  it("an sr-only edge button does not flash the popover", async () => {
+    const screen = await render(
+      <Diagram doc={ingress} detail="popover" onEdgeClick={(id) => void id} />,
+    );
+    await screen.getByRole("button", { name: "Warehouse", exact: true }).click();
+    await expect.element(screen.getByRole("dialog", { name: "Warehouse" })).toBeVisible();
+    const btn = screen.container.querySelector(
+      "[data-conduit-edge-list] button",
+    ) as HTMLButtonElement;
+    btn.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await expect.poll(() => dialog(screen)?.textContent?.includes("→") ?? false).toBe(true);
+    await expect
+      .poll(() => {
+        const dlg = dialog(screen);
+        return (
+          dlg !== null && (dlg === document.activeElement || dlg.contains(document.activeElement))
+        );
+      })
+      .toBe(true);
   });
 });

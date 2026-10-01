@@ -298,7 +298,7 @@ export const Diagram = ({
           </Popover>
         )}
 
-        <ul className="sr-only">
+        <ul className="sr-only" data-conduit-edge-list>
           {laid.edges.map(({ edge }) => {
             const text = `${nodeLabel.get(edge.from) ?? edge.from} → ${nodeLabel.get(edge.to) ?? edge.to}, ${edge.kind}`;
             return (

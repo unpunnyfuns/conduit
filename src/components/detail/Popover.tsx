@@ -13,7 +13,9 @@ export type PopoverProps = {
 
 const isOwnTarget = (target: EventTarget | null): boolean =>
   target instanceof Element &&
-  target.closest("[data-conduit-node], [data-edge-hit], [data-conduit-popover]") !== null;
+  target.closest(
+    "[data-conduit-popover], [data-edge-hit], [data-conduit-node] button, [data-conduit-edge-list]",
+  ) !== null;
 
 /**
  * A dialog pinned inside the canvas beside its anchor, so it scrolls and
@@ -29,6 +31,8 @@ export const Popover = ({ anchor, canvas, labelledBy, onClose, children }: Popov
   // focused before opening it rather than the dialog after.
   if (previousFocusRef.current === null) previousFocusRef.current = document.activeElement;
   const hasFocusedRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   // Re-measures after every render; setHeight bails out when the value is
   // unchanged, so this stays cheap while picking up content/anchor changes
@@ -46,22 +50,32 @@ export const Popover = ({ anchor, canvas, labelledBy, onClose, children }: Popov
     }
   }, [height]);
 
+  // Mount-only: listens for the lifetime of this dialog instance and always
+  // calls the latest onClose via the ref, so an inline onClose identity
+  // never tears the listeners down and re-adds them.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
     };
     const onDown = (event: MouseEvent) => {
-      if (!isOwnTarget(event.target)) onClose();
+      if (!isOwnTarget(event.target)) onCloseRef.current();
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("mousedown", onDown);
     return () => {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("mousedown", onDown);
-      const previous = previousFocusRef.current;
-      if (previous instanceof HTMLElement) previous.focus();
     };
-  }, [onClose]);
+  }, []);
+
+  // Mount-only: restores focus exactly once, when this dialog instance
+  // unmounts, regardless of how many times it re-rendered in between.
+  useEffect(() => {
+    return () => {
+      const previous = previousFocusRef.current;
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
+    };
+  }, []);
 
   const box = placePopover(anchor, { width: POPOVER_WIDTH, height: height ?? 0 }, canvas);
 
