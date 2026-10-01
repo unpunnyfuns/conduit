@@ -24,7 +24,11 @@ export const Popover = ({ anchor, canvas, labelledBy, onClose, children }: Popov
   const ref = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
   const previousFocusRef = useRef<Element | null>(null);
+  // Guarded lazy init: reads document.activeElement on first render, before
+  // the popover can take focus itself, so it captures what the user had
+  // focused before opening it rather than the dialog after.
   if (previousFocusRef.current === null) previousFocusRef.current = document.activeElement;
+  const hasFocusedRef = useRef(false);
 
   useLayoutEffect(() => {
     const node = ref.current;
@@ -32,7 +36,10 @@ export const Popover = ({ anchor, canvas, labelledBy, onClose, children }: Popov
   }, [children, anchor]);
 
   useLayoutEffect(() => {
-    if (height !== undefined) ref.current?.focus();
+    if (height !== undefined && !hasFocusedRef.current) {
+      hasFocusedRef.current = true;
+      ref.current?.focus();
+    }
   }, [height]);
 
   useEffect(() => {

@@ -93,4 +93,33 @@ describe("Popover", () => {
     );
     await expect.poll(() => document.activeElement?.getAttribute("data-testid")).toBe("opener");
   });
+
+  it("focuses once, not on every re-measure", async () => {
+    const screen = await render(
+      <div data-conduit-canvas style={{ position: "relative", width: 800, height: 600 }}>
+        <Popover anchor={anchor} canvas={canvas} labelledBy="t" onClose={() => {}}>
+          <h3 id="t">Title</h3>
+          <button type="button" data-testid="inner">
+            inner
+          </button>
+        </Popover>
+      </div>,
+    );
+    const dialog = screen.getByRole("dialog", { name: "Title" }).element() as HTMLElement;
+    await expect.poll(() => document.activeElement === dialog).toBe(true);
+    const inner = screen.getByTestId("inner").element() as HTMLElement;
+    inner.focus();
+    await screen.rerender(
+      <div data-conduit-canvas style={{ position: "relative", width: 800, height: 600 }}>
+        <Popover anchor={anchor} canvas={canvas} labelledBy="t" onClose={() => {}}>
+          <h3 id="t">Title</h3>
+          <button type="button" data-testid="inner">
+            inner
+          </button>
+          <div style={{ height: 120 }} />
+        </Popover>
+      </div>,
+    );
+    await expect.poll(() => document.activeElement?.getAttribute("data-testid")).toBe("inner");
+  });
 });
